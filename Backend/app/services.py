@@ -4,8 +4,8 @@ from core.config import config
 from typing import Union, Dict, Optional
 
 
+NCBI_API_KEY = config.NCBI_API_KEY
 
-PUBMED_API_KEY = config.PUBMED_API_KEY
 
 
 def fetch_pmc_id(pmid, api_key):
@@ -64,7 +64,7 @@ def fetch_abstract(pmid, api_key):
         return f"Error: {response.status_code}, {response.text}"
 
 
-def fetch_full_text_or_abstract(pmid, api_key):
+def fetch_full_text_or_abstract(pmid, api_key: Optional[str] = NCBI_API_KEY):
     """Check PMC for full-text availability, otherwise return the abstract."""
     pmc_id = fetch_pmc_id(pmid, api_key)
     
@@ -79,18 +79,17 @@ def fetch_full_text_or_abstract(pmid, api_key):
 
 
 
-# Test the methods
-
+##### Test case for the above the methods
 
 # pmid = "30092180"  # Example PubMed ID
-# result = fetch_full_text_or_abstract(pmid, PUBMED_API_KEY)
+# result = fetch_full_text_or_abstract(pmid)
 # if isinstance(result, bytes):
 #     print("PDF downloaded successfully (binary data).")
 # else:
 #     print("Abstract:", result)
 
 
-def fetch_gse_entry(gse_id: str, api_key: Optional[str] = PUBMED_API_KEY) -> Union[str, Dict[str, str]]:
+def fetch_gse_entry(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union[str, Dict[str, str]]:
    
     if not gse_id or not isinstance(gse_id, str):
         return {"error": "invalid_input", "message": "GSE ID must be a non-empty string"}
@@ -142,9 +141,8 @@ def fetch_gse_entry(gse_id: str, api_key: Optional[str] = PUBMED_API_KEY) -> Uni
                     
 
     
-# test
-# result = fetch_gse_entry("GSE13507")
+##### Test case for the above the method
+
+# result = fetch_gse_entry("GSE13517")
 # import json
-# print(json.dumps(result, indent=2))  
-
-
+# print(json.dumps(result, indent=2)) 

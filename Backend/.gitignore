@@ -2,3 +2,10 @@
 /venv
 /app/__pycache__
 /app/core/__pycache__
+
+
+
+
+
+# a text file where i store temporary texts like outputs and code snippets...
+clipboard.txt
