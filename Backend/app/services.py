@@ -136,9 +136,7 @@ def fetch_gse_entry(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union
             )
     summary_response.raise_for_status()
     summary_data = summary_response.json()
-    return summary_data
-
-                    
+    return summary_data                   
 
     
 ##### Test case for the above the method
@@ -146,3 +144,53 @@ def fetch_gse_entry(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union
 # result = fetch_gse_entry("GSE13517")
 # import json
 # print(json.dumps(result, indent=2)) 
+
+
+def convert_nodes_to_metta(nodes):
+    """
+    Converts BioKGrapher-style nodes to MeTTa expressions.
+    
+    Each node is expected to have:
+    - "id"
+    - "parent" (can be empty string for root)
+    - "name"
+    - "KLD"
+    - "Explanation"
+    """
+    id_to_name = {node["id"]: node["name"] for node in nodes}
+    metta_lines = []
+
+    for node in nodes:
+        node_id = node["id"]
+        node_name = node["name"].replace('"', "'")
+        parent_id = node["parent"]
+        kld_score = node.get("KLD", "0")
+        explanation = node.get("Explanation", "").replace('"', "'")
+
+        # is-a relation
+        if parent_id and parent_id in id_to_name:
+            parent_name = id_to_name[parent_id].replace('"', "'")
+            metta_lines.append(f'(is-a "{node_name}" "{parent_name}")')
+        else:
+            # Root node — declare concept explicitly
+            metta_lines.append(f'(Concept "{node_name}")')
+
+        # KLD score
+        metta_lines.append(f'(KLD "{node_name}" {kld_score})')
+
+        # Explanation
+        if explanation:
+            metta_lines.append(f'(description "{node_name}" "{explanation}")')
+
+    return "\n".join(metta_lines)
+
+##### Test case for the above the method
+# nodes = [
+#     {"id": "0", "parent": "", "name": "Cancer", "KLD": "0.85", "Explanation": "A class of diseases..."},
+#     {"id": "1", "parent": "0", "name": "Melanoma", "KLD": "0.78", "Explanation": "A type of skin cancer..."},
+#     {"id": "2", "parent": "0", "name": "Leukemia", "KLD": "0.80", "Explanation": "Cancer of blood-forming tissues..."},
+#     {"id": "3", "parent": "1", "name": "BRAF Mutation", "KLD": "0.91", "Explanation": "Genetic change associated with melanoma..."}
+# ]
+
+# metta_code = convert_nodes_to_metta(nodes)
+# print(metta_code)
