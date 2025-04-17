@@ -1,11 +1,13 @@
 import requests
 import re
 from core.config import config
-from typing import Union, Dict, Optional
+from typing import Union, Dict, Optional, List
+import GEOparse
+import json
 
 
+NCBI_API_KEY = config.NCBI_API_KEY
 
-PUBMED_API_KEY = config.PUBMED_API_KEY
 
 
 def fetch_pmc_id(pmid, api_key):
@@ -64,7 +66,7 @@ def fetch_abstract(pmid, api_key):
         return f"Error: {response.status_code}, {response.text}"
 
 
-def fetch_full_text_or_abstract(pmid, api_key):
+def fetch_pubmed_article(pmid, api_key: Optional[str] = NCBI_API_KEY):
     """Check PMC for full-text availability, otherwise return the abstract."""
     pmc_id = fetch_pmc_id(pmid, api_key)
     
@@ -79,18 +81,17 @@ def fetch_full_text_or_abstract(pmid, api_key):
 
 
 
-# Test the methods
-
+##### Test case for the above the methods
 
 # pmid = "30092180"  # Example PubMed ID
-# result = fetch_full_text_or_abstract(pmid, PUBMED_API_KEY)
+# result = fetch_pubmed_article(pmid)
 # if isinstance(result, bytes):
 #     print("PDF downloaded successfully (binary data).")
 # else:
 #     print("Abstract:", result)
 
 
-def fetch_gse_entry(gse_id: str, api_key: Optional[str] = PUBMED_API_KEY) -> Union[str, Dict[str, str]]:
+def fetch_gse_summary(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union[str, Dict[str, str]]:
    
     if not gse_id or not isinstance(gse_id, str):
         return {"error": "invalid_input", "message": "GSE ID must be a non-empty string"}
@@ -137,14 +138,89 @@ def fetch_gse_entry(gse_id: str, api_key: Optional[str] = PUBMED_API_KEY) -> Uni
             )
     summary_response.raise_for_status()
     summary_data = summary_response.json()
-    return summary_data
-
-                    
+    return summary_data                   
 
     
-# test
-# result = fetch_gse_entry("GSE13507")
+##### Test case for the above the method
+
+# result = fetch_gse_summary("GSE12277")
 # import json
-# print(json.dumps(result, indent=2))  
+# print(json.dumps(result, indent=2)) 
 
 
+
+def fetch_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
+    """
+    Fetches a GSE entry from GEO database.
+    
+    Parameters:
+    - gse_id: The GEO Series ID (e.g., "GSE12277").
+    
+    Returns:
+    - A string containing the GSE entry in JSON format or a dictionary with error details.
+    """
+    try:
+        gse = GEOparse.get_GEO(geo=gse_id, destdir="../data", silent=True)
+        if not gse:
+            return {"error": "not_found", "message": f"{gse_id} not found in GEO database"}
+        print("Successfully fetched GSE data.")
+        return gse
+    except Exception as e:
+        print(f"Error fetching GSE {gse_id} with GEOparse: {e}")
+        return None
+
+
+# gse= fetch_gse_data("GSE12277")
+# metadata = gse.metadata
+# print(json.dumps(metadata, indent=2))
+
+
+# a method to convert BioKGrapher-style nodes to MeTTa expressions
+def convert_nodes_to_metta(nodes):
+    """
+    Converts BioKGrapher-style nodes to MeTTa expressions.
+    
+    Each node is expected to have:
+    - "id"
+    - "parent" (can be empty string for root)
+    - "name"
+    - "KLD"
+    - "Explanation"
+    """
+    id_to_name = {node["id"]: node["name"] for node in nodes}
+    metta_lines = []
+
+    for node in nodes:
+        node_id = node["id"]
+        node_name = node["name"].replace('"', "'")
+        parent_id = node["parent"]
+        kld_score = node.get("KLD", "0")
+        explanation = node.get("Explanation", "").replace('"', "'")
+
+        # is-a relation
+        if parent_id and parent_id in id_to_name:
+            parent_name = id_to_name[parent_id].replace('"', "'")
+            metta_lines.append(f'(is-a "{node_name}" "{parent_name}")')
+        else:
+            # Root node — declare concept explicitly
+            metta_lines.append(f'(Concept "{node_name}")')
+
+        # KLD score
+        metta_lines.append(f'(KLD "{node_name}" {kld_score})')
+
+        # Explanation
+        if explanation:
+            metta_lines.append(f'(description "{node_name}" "{explanation}")')
+
+    return "\n".join(metta_lines)
+
+##### Test case for the above the method
+# nodes = [
+#     {"id": "0", "parent": "", "name": "Cancer", "KLD": "0.85", "Explanation": "A class of diseases..."},
+#     {"id": "1", "parent": "0", "name": "Melanoma", "KLD": "0.78", "Explanation": "A type of skin cancer..."},
+#     {"id": "2", "parent": "0", "name": "Leukemia", "KLD": "0.80", "Explanation": "Cancer of blood-forming tissues..."},
+#     {"id": "3", "parent": "1", "name": "BRAF Mutation", "KLD": "0.91", "Explanation": "Genetic change associated with melanoma..."}
+# ]
+
+# metta_code = convert_nodes_to_metta(nodes)
+# print(metta_code)
