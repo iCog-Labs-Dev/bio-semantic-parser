@@ -1,7 +1,9 @@
 import requests
 import re
 from core.config import config
-from typing import Union, Dict, Optional
+from typing import Union, Dict, Optional, List
+import GEOparse
+import json
 
 
 NCBI_API_KEY = config.NCBI_API_KEY
@@ -64,7 +66,7 @@ def fetch_abstract(pmid, api_key):
         return f"Error: {response.status_code}, {response.text}"
 
 
-def fetch_full_text_or_abstract(pmid, api_key: Optional[str] = NCBI_API_KEY):
+def fetch_pubmed_article(pmid, api_key: Optional[str] = NCBI_API_KEY):
     """Check PMC for full-text availability, otherwise return the abstract."""
     pmc_id = fetch_pmc_id(pmid, api_key)
     
@@ -82,14 +84,14 @@ def fetch_full_text_or_abstract(pmid, api_key: Optional[str] = NCBI_API_KEY):
 ##### Test case for the above the methods
 
 # pmid = "30092180"  # Example PubMed ID
-# result = fetch_full_text_or_abstract(pmid)
+# result = fetch_pubmed_article(pmid)
 # if isinstance(result, bytes):
 #     print("PDF downloaded successfully (binary data).")
 # else:
 #     print("Abstract:", result)
 
 
-def fetch_gse_entry(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union[str, Dict[str, str]]:
+def fetch_gse_summary(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union[str, Dict[str, str]]:
    
     if not gse_id or not isinstance(gse_id, str):
         return {"error": "invalid_input", "message": "GSE ID must be a non-empty string"}
@@ -141,11 +143,39 @@ def fetch_gse_entry(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union
     
 ##### Test case for the above the method
 
-# result = fetch_gse_entry("GSE13517")
+# result = fetch_gse_summary("GSE12277")
 # import json
 # print(json.dumps(result, indent=2)) 
 
 
+
+def fetch_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
+    """
+    Fetches a GSE entry from GEO database.
+    
+    Parameters:
+    - gse_id: The GEO Series ID (e.g., "GSE12277").
+    
+    Returns:
+    - A string containing the GSE entry in JSON format or a dictionary with error details.
+    """
+    try:
+        gse = GEOparse.get_GEO(geo=gse_id, destdir="../data", silent=True)
+        if not gse:
+            return {"error": "not_found", "message": f"{gse_id} not found in GEO database"}
+        print("Successfully fetched GSE data.")
+        return gse
+    except Exception as e:
+        print(f"Error fetching GSE {gse_id} with GEOparse: {e}")
+        return None
+
+
+# gse= fetch_gse_data("GSE12277")
+# metadata = gse.metadata
+# print(json.dumps(metadata, indent=2))
+
+
+# a method to convert BioKGrapher-style nodes to MeTTa expressions
 def convert_nodes_to_metta(nodes):
     """
     Converts BioKGrapher-style nodes to MeTTa expressions.
