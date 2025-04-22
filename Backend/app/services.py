@@ -1,6 +1,6 @@
 import requests
 import re
-from core.config import config
+from .core.config import config
 from typing import Union, Dict, Optional, List
 import GEOparse
 import json
@@ -160,7 +160,8 @@ def fetch_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
     - A string containing the GSE entry in JSON format or a dictionary with error details.
     """
     try:
-        gse = GEOparse.get_GEO(geo=gse_id, destdir="../data", silent=True)
+        # gse = GEOparse.get_GEO(geo=gse_id, destdir="../data", silent=True)
+        gse = GEOparse.get_GEO(geo=gse_id, silent=True)  # No writing to disk
         if not gse:
             return {"error": "not_found", "message": f"{gse_id} not found in GEO database"}
         print("Successfully fetched GSE data.")
@@ -173,6 +174,52 @@ def fetch_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
 # gse= fetch_gse_data("GSE12277")
 # metadata = gse.metadata
 # print(json.dumps(metadata, indent=2))
+
+def extract_pubmed_id(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Optional[str]:
+    """
+    Extracts the PubMed ID associated with a given GSE ID using NCBI Entrez utilities.
+
+    Args:
+        gse_id (str): The GEO Series identifier (e.g., 'GSE12345').
+        api_key (str): NCBI API key (optional, uses default from config).
+
+    Returns:
+        Optional[str]: The PubMed ID if found, else None.
+    """
+    base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+    headers = {"User-Agent": "GSE_PubMed_Fetcher/1.0"}
+
+    # Step 1: Search for the UID
+    search_params = {
+        "db": "gds",
+        "term": f"{gse_id}[Accession]",
+        "retmode": "json",
+        "api_key": api_key
+    }
+    try:
+        search_res = requests.get(f"{base_url}esearch.fcgi", params=search_params, headers=headers, timeout=15)
+        search_res.raise_for_status()
+        id_list = search_res.json().get("esearchresult", {}).get("idlist", [])
+        if not id_list:
+            print(f"No GDS entry found for {gse_id}")
+            return None
+        uid = id_list[0]
+
+        # Step 2: Get the summary to extract PubMed IDs
+        summary_params = {
+            "db": "gds",
+            "id": uid,
+            "retmode": "json",
+            "api_key": api_key
+        }
+        summary_res = requests.get(f"{base_url}esummary.fcgi", params=summary_params, headers=headers, timeout=15)
+        summary_res.raise_for_status()
+        result = summary_res.json().get("result", {}).get(uid, {})
+        pubmed_ids = result.get("pubmedids", [])
+        return pubmed_ids[0] if pubmed_ids else None
+    except Exception as e:
+        print(f"Error extracting PubMed ID from GSE {gse_id}: {e}")
+        return None
 
 
 # a method to convert BioKGrapher-style nodes to MeTTa expressions
