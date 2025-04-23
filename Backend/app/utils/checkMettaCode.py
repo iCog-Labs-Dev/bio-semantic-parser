@@ -4,20 +4,20 @@ from core.prompts import build_prompt
 from core.config import config
 
 
-
 def tokenize(code: str):
     """Tokenize MeTTa code into a list of atoms and parentheses."""
     return re.findall(r'\(|\)|[^\s()]+', code)
 
 def is_valid_atom(atom: str) -> bool:
     """Check if an atom is valid based on MeTTa rules."""
-    if re.match(r'^\?[\w\-]+$', atom):  
+    if re.match(r'^\$[\w\-]+$', atom):  
         return True
     if re.match(r'^-?\d+(\.\d+)?$', atom):  
         return True
-    if re.match(r'^[a-z_+\-*/=<>!][\w\-]*$', atom):  
+    if re.match(r'^[a-zA-Z_+\-*/=<>!][\w\-]*$', atom):  
         return True
     return False
+
 
 def validate_metta_syntax(code: str) -> (bool, str):
     """Validate the syntax of MeTTa code and return (is_valid, explanation)."""
@@ -64,44 +64,59 @@ def explain_metta_error_groq(code: str, error_info: str) -> str:
             {"role": "user", "content": prompt}
         ]
     }
-
+    # For now don`t use this one, it will used for to suggest to user how to fix metta syntax
     response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=data, headers=headers)
     return response.json()['choices'][0]['message']['content'].strip()
    
 
 
 
-# test
+def validate_metta_block(code_block: str) -> bool:
+     for block in code_block.strip().splitlines():
+        is_valid, error= validate_metta_syntax(block)
+        if not is_valid:
+            # print(block)
+            # print(f"error:{block}, suggestion: {(explain_metta_error_groq(block,error))}")
+            return is_valid
 
 
-# test_cases = [
-#     ("a"),
-#     ("(a b c)"),
-#     ("(a (b c) d)"),
-#     ("(  a   ( b   c )  )"),
-#     ("(a (b c)"),
-#     ("(A b c)"),
-#     ("123"),
-#     ("a)"),
-#     ("a-b"),
-#     ("(a (B) c)"),
-#     (""),
-#     ("equal (add ?x 3) 5")
-# ]
-
-# if __name__ == "__main__":
-#     for code in test_cases:
-#         is_valid, error = validate_metta_syntax(code)
-#         result = is_valid 
-
-#         print(f"Test: {repr(code)}")
-#         print(f"Got: {is_valid}")
-#         if not is_valid:
-#             print(f"❌ Error: {error}")
-#             print(f"🧠 LLM Suggestion: {(code, error)}")
-#         else:
-#             print("✅ Pass\n" if result else "❌ Fail\n")
+     return is_valid
+     
 
 
+    
 
+
+# test_cases = """
+# (a b c)
+# (a (b c) d)
+# (  a   ( b   c )  )
+# ((add $x 3))
+# !(equal (add $x 3) 5)
+# (a b c)
+# (a (b c) d)
+# (  a   ( b   c )  )
+# (A b c)
+# ((add $x 3))
+# !(equal (add $x 3) 5)
+# (a b c)
+# (a (b c) d)
+# (  a   ( b   c )  )
+# (A b c)
+# ((add $x 3))
+# !(equal (add $x 3) 5)
+# (a b c )
+# (a (b c) d)
+# (  a   ( b   c )  )
+# ((add $x 3))
+# !(equal (add $x 3) 5)
+# (=(duplicate $x) ($x $x))
+# ! (duplicate A)
+# ! (duplicate 1.05)
+
+
+# """ 
+
+
+# print(validate_metta_block(test_cases))
 
