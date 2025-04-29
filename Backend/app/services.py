@@ -1,6 +1,6 @@
 import requests
 import re
-from .core.config import config
+from core.config import config
 from typing import Union, Dict, Optional, List
 import GEOparse
 import json
@@ -220,6 +220,81 @@ def extract_pubmed_id(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Opt
     except Exception as e:
         print(f"Error extracting PubMed ID from GSE {gse_id}: {e}")
         return None
+
+
+def annotate_with_medcat(text, medcat_url= config.MEDCAT_URL):
+    """
+    Sends text to the MedCAT API and returns the JSON response.
+    """
+    payload = {"content": {"text": text}}
+    headers = {"Content-Type": "application/json"}
+
+    response = requests.post(medcat_url, json=payload, headers=headers)
+    response.raise_for_status()
+    return response.json()
+
+
+# annotated_text= annotate_with_medcat("Breast cancer is a type of cancer that forms in the cells of the breasts.")
+# print(json.dumps(annotated_text, indent=2))
+
+
+def parse_medcat_response(medcat_json):
+    """
+    Parses MedCAT's response JSON to keep only the required fields.
+
+    Returns:
+        dict: {
+            "text": <original text>,
+            "annotations": [ 
+                {
+                    "pretty_name": ...,
+                    "cui": ...,
+                    "types": [...],
+                    "detected_name": ...
+                },
+                ...
+            ]
+        }
+    """
+    result = medcat_json.get("result", {})
+    raw_annotations = result.get("annotations", [])
+    text = result.get("text", "")
+
+    filtered_annotations = []
+
+    if raw_annotations and isinstance(raw_annotations[0], dict):
+        for _, annotation in raw_annotations[0].items():
+            filtered = {
+                "pretty_name": annotation.get("pretty_name"),
+                "detected_name": annotation.get("detected_name"),
+                "cui": annotation.get("cui"),
+                "types": annotation.get("types", []),
+                
+            }
+            filtered_annotations.append(filtered)
+
+    return {
+        "text": text,
+        "annotations": filtered_annotations
+    }
+
+
+# text = "The patient was diagnosed with cancer."
+# json_response = annotate_with_medcat(text)
+# cleaned = parse_medcat_response(json_response)
+# print(json.dumps(cleaned, indent=2))
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # a method to convert BioKGrapher-style nodes to MeTTa expressions

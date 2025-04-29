@@ -5,7 +5,7 @@ load_dotenv()
 class Config:
     NCBI_API_KEY= os.getenv("NCBI_API_KEY")
     GROQ_API_KEY = os.getenv("API_KEY")
-
+    MEDCAT_URL = os.getenv("MEDCAT_URL")
 
 # Create a config instance
 config = Config()
