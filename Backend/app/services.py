@@ -4,7 +4,8 @@ from core.config import config
 from typing import Union, Dict, Optional, List
 import GEOparse
 import json
-
+from utils.openai_utils import openai_generate
+from core.prompts import FOL_generation_prompt
 
 NCBI_API_KEY = config.NCBI_API_KEY
 
@@ -283,6 +284,107 @@ def parse_medcat_response(medcat_json):
 # json_response = annotate_with_medcat(text)
 # cleaned = parse_medcat_response(json_response)
 # print(json.dumps(cleaned, indent=2))
+
+
+def generate_triples_from_concepts(parsed_medcat_response, prompt):
+    """
+    Generate First-Order Logic (FOL) relationships from annotated MedCAT concepts using an LLM.
+
+    Args:
+        parsed_medcat_response (list of dict): List of parsed concept dictionaries.
+        prompt (str): Prompt with a placeholder for concept list (e.g., {concepts}).
+
+    Returns:
+        str: LLM-generated FOL output.
+    """
+
+    annotations = parsed_medcat_response.get("annotations", [])
+
+    text= parsed_medcat_response.get("text")
+    concepts_str = "\n".join([
+        f"- Concept: {c['pretty_name']} (Type: {', '.join(c['types'])}, Mentioned as: \"{c['detected_name']}\")"
+        for c in annotations
+    ])
+
+    # Debugging print statements to see the values being passed
+    print("Concepts String:")
+    print(concepts_str)
+    print("Text:")
+    print(text)
+
+
+    filled_prompt = prompt.format(concepts= concepts_str, texts=text)
+
+    print("Filled Prompt:")
+    print(filled_prompt)
+
+    messages = [
+        {'role': 'system', 'content': 'You are an expert in biomedical knowledge representation.'},
+        {'role': 'user', 'content': filled_prompt}
+    ]
+
+    response = openai_generate(messages=messages)
+    return response.choices[0].message.content.strip()
+
+
+
+# text = """
+# The purpose of this study was to investigate the effect of 10-week of endurance training or resistance training on regional and abdominal fat, and in the lipid profile, examining the associations among the changes in body composition, weight, waist circumference and lipid profile. Body composition, waist circumference and lipid profile were analyzed in 26 volunteers healthy young men (age 22.5 ± 1.9 yr), randomly assigned to: endurance group (EG), resistance group (RG) or control group (CG). The EG significantly decreased after training the body weight, body mass index, total body fat and percentage of fat, fat and percentage of fat at the trunk and at the abdominal region and High-Density Lipoprotein. The RG significantly increased total lean mass and decreased total cholesterol, High-Density and Low- Density Lipoprotein. Close relationship were found among changes in weight, total lean mass, regional fat mass, waist circumference and changes in lipid profile (all p < 0.05). We concluded that 10-week of endurance training decreased abdominal and body fat in young men, while 10-week of resistance training increased total lean mass. These types of training had also effects on lipid profile that seem to be to some extent associated to changes in body composition; however it requires additional investigation.
+# """
+# json_response = annotate_with_medcat(text)
+# cleaned_reponse = parse_medcat_response(json_response)
+# # print(json.dumps(cleaned_reponse, indent=2))
+# triples_json = generate_triples_from_concepts(cleaned_reponse, FOL_generation_prompt)
+
+# # Strip leading/trailing whitespace and backticks (including optional "json" label)
+# triples_json = triples_json.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+
+# Show result
+# print("Generated FOL:")
+# print(triples_json)
+
+
+def parse_triples_to_predicates(triples_json):
+    """
+    Converts a list of triples into predicate(subject, object) format.
+    
+    Args:
+        triples_json (dict): A dictionary containing a "triples" key with a list of subject-predicate-object dictionaries.
+    
+    Returns:
+        list: A list of strings in predicate(subject, object) format.
+    """
+
+   
+    predicate_lines = []
+    for triple in triples_json.get("triples", []):
+        subject = triple["subject"]
+        predicate = triple["predicate"]
+        obj = triple["object"]
+
+        # Ensure valid variable-like formatting (optional)
+        subject_str = subject.replace(" ", "_")
+        object_str = obj.replace(" ", "_")
+        predicate_str = predicate.replace(" ", "_")
+
+        predicate_lines.append(f"{predicate_str}({subject_str}, {object_str})")
+    
+    return predicate_lines
+
+
+# triples_output = json.loads(triples_json)
+
+# predicates = parse_triples_to_predicates(triples_output)
+# print("\n\n Generated predicates: \n")
+# print("\n".join(predicates))
+
+
+
+
+
+
+
+
 
 
 
