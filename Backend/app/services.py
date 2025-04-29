@@ -234,7 +234,7 @@ def annotate_with_medcat(text, medcat_url= config.MEDCAT_URL):
     response.raise_for_status()
     return response.json()
 
-
+##### Test case for the above method
 # annotated_text= annotate_with_medcat("Breast cancer is a type of cancer that forms in the cells of the breasts.")
 # print(json.dumps(annotated_text, indent=2))
 
@@ -279,7 +279,7 @@ def parse_medcat_response(medcat_json):
         "annotations": filtered_annotations
     }
 
-
+##### test case for the above method
 # text = "The patient was diagnosed with cancer."
 # json_response = annotate_with_medcat(text)
 # cleaned = parse_medcat_response(json_response)
@@ -327,6 +327,7 @@ def generate_triples_from_concepts(parsed_medcat_response, prompt):
     return response.choices[0].message.content.strip()
 
 
+###### Test case for the above method
 
 # text = """
 # The purpose of this study was to investigate the effect of 10-week of endurance training or resistance training on regional and abdominal fat, and in the lipid profile, examining the associations among the changes in body composition, weight, waist circumference and lipid profile. Body composition, waist circumference and lipid profile were analyzed in 26 volunteers healthy young men (age 22.5 ± 1.9 yr), randomly assigned to: endurance group (EG), resistance group (RG) or control group (CG). The EG significantly decreased after training the body weight, body mass index, total body fat and percentage of fat, fat and percentage of fat at the trunk and at the abdominal region and High-Density Lipoprotein. The RG significantly increased total lean mass and decreased total cholesterol, High-Density and Low- Density Lipoprotein. Close relationship were found among changes in weight, total lean mass, regional fat mass, waist circumference and changes in lipid profile (all p < 0.05). We concluded that 10-week of endurance training decreased abdominal and body fat in young men, while 10-week of resistance training increased total lean mass. These types of training had also effects on lipid profile that seem to be to some extent associated to changes in body composition; however it requires additional investigation.
@@ -371,80 +372,9 @@ def parse_triples_to_predicates(triples_json):
     
     return predicate_lines
 
+##### test case for the above method
 
-# triples_output = json.loads(triples_json)
-
+# triples_output = json.loads(triples_json)  # run this after generating triples_json
 # predicates = parse_triples_to_predicates(triples_output)
 # print("\n\n Generated predicates: \n")
 # print("\n".join(predicates))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# a method to convert BioKGrapher-style nodes to MeTTa expressions
-def convert_nodes_to_metta(nodes):
-    """
-    Converts BioKGrapher-style nodes to MeTTa expressions.
-    
-    Each node is expected to have:
-    - "id"
-    - "parent" (can be empty string for root)
-    - "name"
-    - "KLD"
-    - "Explanation"
-    """
-    id_to_name = {node["id"]: node["name"] for node in nodes}
-    metta_lines = []
-
-    for node in nodes:
-        node_id = node["id"]
-        node_name = node["name"].replace('"', "'")
-        parent_id = node["parent"]
-        kld_score = node.get("KLD", "0")
-        explanation = node.get("Explanation", "").replace('"', "'")
-
-        # is-a relation
-        if parent_id and parent_id in id_to_name:
-            parent_name = id_to_name[parent_id].replace('"', "'")
-            metta_lines.append(f'(is-a "{node_name}" "{parent_name}")')
-        else:
-            # Root node — declare concept explicitly
-            metta_lines.append(f'(Concept "{node_name}")')
-
-        # KLD score
-        metta_lines.append(f'(KLD "{node_name}" {kld_score})')
-
-        # Explanation
-        if explanation:
-            metta_lines.append(f'(description "{node_name}" "{explanation}")')
-
-    return "\n".join(metta_lines)
-
-##### Test case for the above the method
-# nodes = [
-#     {"id": "0", "parent": "", "name": "Cancer", "KLD": "0.85", "Explanation": "A class of diseases..."},
-#     {"id": "1", "parent": "0", "name": "Melanoma", "KLD": "0.78", "Explanation": "A type of skin cancer..."},
-#     {"id": "2", "parent": "0", "name": "Leukemia", "KLD": "0.80", "Explanation": "Cancer of blood-forming tissues..."},
-#     {"id": "3", "parent": "1", "name": "BRAF Mutation", "KLD": "0.91", "Explanation": "Genetic change associated with melanoma..."}
-# ]
-
-# metta_code = convert_nodes_to_metta(nodes)
-# print(metta_code)
