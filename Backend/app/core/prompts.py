@@ -27,3 +27,49 @@ Format your answer exactly like the example above:
 Error: [explanation]
 Fix: [suggested fix]
 """
+
+FOL_generation_prompt = """You are a biomedical text reasoning assistant. Your task is to extract relationships from biomedical text and express them in the form of subject–predicate–object triples, formatted as JSON.
+
+Only use concepts from the provided annotations as the **subject** and **object** of each triple. The **predicate** should describe the relationship between them, based on the context of the original text.
+
+Each annotation contains:
+- `pretty_name`: a normalized biomedical concept
+- `detected_name`: the phrase as it appears in the original text
+- `types`: the semantic category of the concept
+
+Use `pretty_name` for the subject and object values. The `detected_name` shows the original wording found in the text but should not appear in the output.
+
+---
+
+### Example
+
+Text:
+"The patient was diagnosed with cancer."
+
+Annotations:
+- Concept: Patients (Type: Patient or Disabled Group, Mentioned as: "patient")
+- Concept: cancer diagnosis (Type: Diagnostic Procedure, Mentioned as: "diagnosed~with~cancer")
+
+Expected Output (JSON):
+```{{
+  "triples": [
+    {{
+      "subject": "Patients",
+      "predicate": "diagnosed_with",
+      "object": "cancer diagnosis"
+    }}
+  ]
+}}```
+
+---
+
+Now, extract triples from the following input:
+
+Text:
+{texts}
+
+Annotations:
+{concepts}
+
+Expected Output (JSON):
+"""
