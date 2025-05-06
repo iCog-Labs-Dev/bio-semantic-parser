@@ -319,7 +319,12 @@ def generate_triples_from_concepts(parsed_medcat_response, prompt):
     print(filled_prompt)
 
     messages = [
-        {'role': 'system', 'content': 'You are an expert in biomedical knowledge representation.'},
+        {'role': 'system', 'content': """
+            You are an AI expert specialized in knowledge graph extraction. 
+Your task is to identify and extract factual Subject-Predicate-Object (SPO) triples from the given text and its annotation.
+Focus on accuracy and adhere strictly to the JSON output format requested in the user prompt.
+Extract core entities and the most direct relationship.
+"""},
         {'role': 'user', 'content': filled_prompt}
     ]
 
@@ -330,7 +335,7 @@ def generate_triples_from_concepts(parsed_medcat_response, prompt):
 ###### Test case for the above method
 
 # text = """
-# The purpose of this study was to investigate the effect of 10-week of endurance training or resistance training on regional and abdominal fat, and in the lipid profile, examining the associations among the changes in body composition, weight, waist circumference and lipid profile. Body composition, waist circumference and lipid profile were analyzed in 26 volunteers healthy young men (age 22.5 ± 1.9 yr), randomly assigned to: endurance group (EG), resistance group (RG) or control group (CG). The EG significantly decreased after training the body weight, body mass index, total body fat and percentage of fat, fat and percentage of fat at the trunk and at the abdominal region and High-Density Lipoprotein. The RG significantly increased total lean mass and decreased total cholesterol, High-Density and Low- Density Lipoprotein. Close relationship were found among changes in weight, total lean mass, regional fat mass, waist circumference and changes in lipid profile (all p < 0.05). We concluded that 10-week of endurance training decreased abdominal and body fat in young men, while 10-week of resistance training increased total lean mass. These types of training had also effects on lipid profile that seem to be to some extent associated to changes in body composition; however it requires additional investigation.
+# An age-related decline in immune functions, referred to as immunosenescence, is partially responsible for the increased prevalence and severity of infectious diseases, and the low efficacy of vaccination in elderly persons. Immunosenescence is characterized by a decrease in cell-mediated immune function as well as by reduced humoral immune responses. Age-dependent defects in T- and B-cell function coexist with age-related changes within the innate immune system. In this review, we discuss the mechanisms and consequences of age-associated immune alterations as well as their implications for health in old age.
 # """
 # json_response = annotate_with_medcat(text)
 # cleaned_reponse = parse_medcat_response(json_response)

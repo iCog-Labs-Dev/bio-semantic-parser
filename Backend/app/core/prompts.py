@@ -28,42 +28,31 @@ Error: [explanation]
 Fix: [suggested fix]
 """
 
-FOL_generation_prompt = """You are a biomedical text reasoning assistant. Your task is to extract relationships from biomedical text and express them in the form of subject–predicate–object triples, formatted as JSON.
+FOL_generation_prompt = """You are a biomedical text reasoning assistant. Your task is to extract factual relationships from biomedical text in the form of Subject–Predicate–Object (S-P-O) triples.
 
-Only use concepts from the provided annotations as the **subject** and **object** of each triple. The **predicate** should describe the relationship between them, based on the context of the original text.
+CRITICAL INSTRUCTIONS:
 
-Each annotation contains:
-- `pretty_name`: a normalized biomedical concept
-- `detected_name`: the phrase as it appears in the original text
-- `types`: the semantic category of the concept
+Concept Restriction: Use only the provided annotations for the subject and object values. Specifically, use the "pretty_name" of the concept. Do not invent new subjects or objects.
 
-Use `pretty_name` for the subject and object values. The `detected_name` shows the original wording found in the text but should not appear in the output.
+Predicate from Context: Derive the predicate from the context of the original text. Use a short verb or verb phrase (1–3 words, ideally 1–2).
 
----
+Strict JSON Format:
 
-### Example
+Output only a valid JSON array of triples.
 
-Text:
-"The patient was diagnosed with cancer."
+Each triple must be a JSON object with exactly three keys: "subject", "predicate", and "object".
 
-Annotations:
-- Concept: Patients (Type: Patient or Disabled Group, Mentioned as: "patient")
-- Concept: cancer diagnosis (Type: Diagnostic Procedure, Mentioned as: "diagnosed~with~cancer")
+Do not include explanations, markdown tags, or extra text. Only output the raw JSON array.
 
-Expected Output (JSON):
-```{{
-  "triples": [
-    {{
-      "subject": "Patients",
-      "predicate": "diagnosed_with",
-      "object": "cancer diagnosis"
-    }}
-  ]
-}}```
+Lowercase Everything: All values (subject, predicate, object) must be lowercase.
 
----
+Pronoun Resolution: Replace pronouns with the corresponding concept name from annotations (e.g., "she" → "patients").
 
-Now, extract triples from the following input:
+Specificity & Completeness:
+
+Be as specific as the text allows (e.g., "breast carcinoma" instead of "carcinoma").
+
+Extract all distinct, factual S-P-O relationships mentioned.
 
 Text:
 {texts}
@@ -72,4 +61,14 @@ Annotations:
 {concepts}
 
 Expected Output (JSON):
+```{{
+  "triples": [
+    {{
+      "subject": "Patients",
+      "predicate": "diagnosed_with",
+      "object": "breast carcinoma"
+    }}
+  ]
+}}```
+
 """
