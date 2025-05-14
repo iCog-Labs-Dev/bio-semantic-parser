@@ -5,7 +5,7 @@ from typing import Union, Dict, Optional, List
 import GEOparse
 import json
 from utils.openai_utils import openai_generate
-from core.prompts import FOL_generation_prompt
+from core.prompts import FOL_generation_prompt 
 
 NCBI_API_KEY = config.NCBI_API_KEY
 
@@ -345,7 +345,7 @@ Extract core entities and the most direct relationship.
 # # Strip leading/trailing whitespace and backticks (including optional "json" label)
 # triples_json = triples_json.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
 
-# Show result
+# # Show result
 # print("Generated FOL:")
 # print(triples_json)
 
