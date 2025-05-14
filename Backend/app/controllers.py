@@ -22,3 +22,5 @@ def process_gse_pipeline(gse_id: str) -> list:
 
     article = fetch_pubmed_article(pubmed_id)
     return [article]
+
+    # Here we will continue calling for the unstructured data and also we will call the `generate_valid_predicates_from_gse` function and pass `gse` to perform on the structured data.

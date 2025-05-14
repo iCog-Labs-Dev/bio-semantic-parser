@@ -1,5 +1,3 @@
-import GEOparse
-import pprint
 from utils.openai_utils import openai_generate
 import re
 from core.prompts import predicate_instruction
@@ -8,10 +6,6 @@ from core.aspects import annotation_aspects_list
 
 
 
-gse= GEOparse.get_GEO(geo="GSE17833")
-# Ensure gse_ is a GSE object
-gse = gse if isinstance(gse, GEOparse.GEOTypes.GSE) else None
-# print("GSE object:", gse_)
 
 import re
 
@@ -121,8 +115,8 @@ def generate_valid_predicates_from_gse(gse):
 
 
 
-valid_predicates = generate_valid_predicates_from_gse(gse)
+# valid_predicates = generate_valid_predicates_from_gse(gse)
 
-print("Valid predicates extracted:")
-for predicate in valid_predicates:
-    print(predicate)
+# print("Valid predicates extracted:")
+# for predicate in valid_predicates:
+#     print(predicate)
