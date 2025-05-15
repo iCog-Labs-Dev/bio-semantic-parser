@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from core.config import config
+from app.core.config import config
 
 
 def openai_generate(messages: list):

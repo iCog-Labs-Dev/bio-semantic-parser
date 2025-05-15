@@ -1,5 +1,5 @@
 import requests
-from core.config import config
+from app.core.config import config
 from typing import Optional, Union, Dict
 import re
 

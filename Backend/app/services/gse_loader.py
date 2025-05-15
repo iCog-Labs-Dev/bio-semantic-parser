@@ -29,7 +29,7 @@ def fetch_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
 
 
 
-gse= GEOparse.get_GEO(geo="GSE17833")
+# gse= GEOparse.get_GEO(geo="GSE17833")
 # Ensure gse_ is a GSE object
-gse = gse if isinstance(gse, GEOparse.GEOTypes.GSE) else None
+# gse = gse if isinstance(gse, GEOparse.GEOTypes.GSE) else None
 # print("GSE object:", gse_)

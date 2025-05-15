@@ -1,8 +1,8 @@
-from utils.openai_utils import openai_generate
+from app.utils.openai_utils import openai_generate
 import re
-from core.prompts import predicate_instruction
-from core.prompts import refinement_prompt
-from core.aspects import annotation_aspects_list
+from app.core.prompts import predicate_instruction
+from app.core.prompts import refinement_prompt
+from app.core.aspects import annotation_aspects_list
 
 
 

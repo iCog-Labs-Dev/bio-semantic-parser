@@ -1,10 +1,10 @@
 import requests
 import re
-from core.config import config
+from app.core.config import config
 # from typing import Union, Dict, Optional, List
 import json
-from utils.openai_utils import openai_generate
-from core.prompts import FOL_generation_prompt 
+from app.utils.openai_utils import openai_generate
+from app.core.prompts import FOL_generation_prompt 
 
 
 def annotate_with_medcat(text, medcat_url= config.MEDCAT_URL):
@@ -167,3 +167,40 @@ def parse_triples_to_predicates(triples_json):
 # predicates = parse_triples_to_predicates(triples_output)
 # print("\n\n Generated predicates: \n")
 # print("\n".join(predicates))
+
+
+
+def generate_valid_predicates_from_abstract(abstract):
+    """
+    Orchestrates the process of generating valid FOL predicates from a PubMed abstract.
+
+    Args:
+        abstract (str): abstract the article to process.
+
+    Returns:
+        list: List of FOL predicate strings.
+    """
+    
+    # Step 1: Annotate with MedCAT
+    medcat_json = annotate_with_medcat(abstract)
+
+    # Step 2: Parse MedCAT response
+    parsed_response = parse_medcat_response(medcat_json)
+
+    # Step 3: Generate triples (FOL-like) from concepts via LLM
+    triples_text = generate_triples_from_concepts(parsed_response, FOL_generation_prompt)
+
+    # Step 4: Parse the LLM text output to JSON
+    try:
+        # Strip any backticks or code block indicators
+        clean_text = triples_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+        triples_json = json.loads(clean_text)
+    except json.JSONDecodeError as e:
+        print("Error parsing triples JSON:", e)
+        print("Raw output was:", triples_text)
+        return []
+
+    # Step 5: Convert to predicates
+    predicates = parse_triples_to_predicates(triples_json)
+
+    return predicates
