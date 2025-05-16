@@ -5,7 +5,7 @@ load_dotenv()
 class Config:
     NCBI_API_KEY= os.getenv("NCBI_API_KEY")
     GROQ_API_KEY = os.getenv("API_KEY")
-    MEDCAT_URL = os.getenv("MEDCAT_URL")
+    MEDCAT_URL = os.getenv("MEDCAT_URL","http://localhost:5000")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL = "gpt-4"
     OPENAI_TEMPERATURE = 0.0

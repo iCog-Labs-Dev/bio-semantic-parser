@@ -68,7 +68,7 @@ def fetch_pubmed_article(pmid, api_key: Optional[str] = NCBI_API_KEY):
     if pmc_id:
         pdf_content = fetch_pmc_pdf(pmc_id)
         if pdf_content:
-            print(f"Successfully fetched PDF for PMC ID: {pmc_id}")
+            # print(f"Successfully fetched PDF for PMC ID: {pmc_id}")
             return pdf_content  # Return the PDF as binary data
     
     # If no full text is found, return abstract

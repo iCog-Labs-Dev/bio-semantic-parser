@@ -91,16 +91,16 @@ def generate_triples_from_concepts(parsed_medcat_response, prompt):
     ])
 
     # Debugging print statements to see the values being passed
-    print("Concepts String:")
-    print(concepts_str)
-    print("Text:")
-    print(text)
+    # print("Concepts String:")
+    # print(concepts_str)
+    # print("Text:")
+    # print(text)
 
 
     filled_prompt = prompt.format(concepts= concepts_str, texts=text)
 
-    print("Filled Prompt:")
-    print(filled_prompt)
+    # print("Filled Prompt:")
+    # print(filled_prompt)
 
     messages = [
         {'role': 'system', 'content': """

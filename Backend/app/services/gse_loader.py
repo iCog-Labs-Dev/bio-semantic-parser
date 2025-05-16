@@ -16,7 +16,7 @@ def fetch_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
         gse = GEOparse.get_GEO(geo=gse_id, silent=True)  # No writing to disk
         if not gse:
             return {"error": "not_found", "message": f"{gse_id} not found in GEO database"}
-        print("Successfully fetched GSE data.")
+        # print("Successfully fetched GSE data.")
         return gse
     except Exception as e:
         print(f"Error fetching GSE {gse_id} with GEOparse: {e}")
