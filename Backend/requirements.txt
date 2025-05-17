@@ -4,3 +4,4 @@ requests
 pydantic
 python-dotenv
 GEOparse
+openai
