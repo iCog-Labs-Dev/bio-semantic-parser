@@ -2,8 +2,11 @@ import requests
 from app.core.config import config
 from typing import Optional, Union, Dict
 import re
+import tiktoken
 
 NCBI_API_KEY = config.NCBI_API_KEY
+
+tokenizer = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
 def fetch_pmc_id(pmid, api_key):
     """Check if a given PubMed ID (PMID) has a corresponding PMC ID."""
@@ -39,7 +42,7 @@ def fetch_pmc_pdf(pmc_id):
         print(f"Error fetching PDF for PMC{pmc_id}: {e}")
         return None
 
-def fetch_abstract(pmid, api_key):
+def fetch_abstract(pmid, api_key: Optional[str] = NCBI_API_KEY):
     """Retrieve only the abstract of a PubMed article."""
     base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
     params = {
@@ -189,3 +192,29 @@ def extract_pubmed_id(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Opt
     except Exception as e:
         print(f"Error extracting PubMed ID from GSE {gse_id}: {e}")
         return None
+
+def clean_abstract_text(text):
+    # 1. Remove metadata lines like FAU, AU, AD, etc.
+    text = re.sub(r"^(FAU|AU|AD|LA|SI)\s+-.*$", "", text, flags=re.MULTILINE)
+    
+    # 2. Replace `\n` and excessive whitespace with single space
+    text = text.replace('\n', ' ')
+    text = re.sub(r'\s{2,}', ' ', text)
+
+    # 3. Trim leading/trailing spaces
+    text = text.strip()
+
+    return text
+
+def chunk_text(text, max_tokens=400):
+    tokens = tokenizer.encode(text)
+    return [tokenizer.decode(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
+
+# text="""
+# Ionic liquids (ILs) are increasingly receiving interest for a wide range of applications. However, for many applications their cost and/or viscosity can be too high. This can be addressed by using protic ionic liquids as cheaper alternatives, and through mixing with molecular solvents. However, mixing ILs with a molecular solvent adds another dimension to the compositional space, as well as increasing the complexity of solvent-solute interactions. In this study, we have investigated the solvation properties of binary mixtures of PILs with molecular solvents. The selected binary solvent systems are the PILs ethylammonium nitrate (EAN) and propylammonium nitrate (PAN) combined with either water, methanol, acetonitrile or DMSO. In addition, water is combined with the other molecular solvents for comparison. The mole fractions of the secondary solvents were 0, 0.25, 0.5, 0.75, 0.9 and 1 for all combinations, which resulted in a total of 66 solvent mixtures. The solvation properties in each of these mixtures were determined from spectroscopic measurements of 4 well-known solvatochromic probe molecules as solutes. The solvation properties were comparatively investigated, and interpreted, in terms of the specific and non-specific interactions between PIL-solvent, PIL-solute and solvent-solute. All 66 solvent mixtures were also analysed using FTIR with no probe molecules present. In addition, through molecular dynamics simulations, the dye-solvent interactions were simulated for two of the dye molecules in water-EAN binary systems, and the radial distribution functions for the key interactions were obtained. The results showed that the solvation parameters of the binary mixtures deviated considerably from the ideal solvation behaviour. In many cases, bulk compositions and the estimated excess compositions in the solvation shells of the probes were different, suggesting preferential solvation, the extent of which is solute dependent. Our results clearly show that using PILs in a mixture with molecular solvents can strongly enhance the solvation capability.
+
+# """
+
+# chunks= chunk_text(text)
+# for i, chunk in enumerate(chunks):
+#     print(f"Chunk {i+1}:\n{chunk}\n")
