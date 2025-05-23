@@ -4,6 +4,8 @@
 /app/core/__pycache__
 /data 
 
+*.pyc
+__pycache__/
 
 
 
