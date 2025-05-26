@@ -206,7 +206,7 @@ def clean_abstract_text(text):
 
     return text
 
-def chunk_text(text, max_tokens=400):
+def chunk_text(text, max_tokens=300):
     tokens = tokenizer.encode(text)
     return [tokenizer.decode(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
 
