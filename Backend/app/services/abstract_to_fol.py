@@ -145,19 +145,22 @@ def parse_triples_to_predicates(triples_json):
         list: A list of strings in predicate(subject, object) format.
     """
 
-   
     predicate_lines = []
-    for triple in triples_json.get("triples", []):
+
+    if isinstance(triples_json, dict):
+        triples = triples_json.get("triples", [])
+    elif isinstance(triples_json, list):
+        triples = triples_json
+    else:
+        print("Unexpected format for triples_json:", type(triples_json))
+        triples = []
+
+    for triple in triples:
         subject = triple["subject"]
         predicate = triple["predicate"]
         obj = triple["object"]
-
-        # Ensure valid variable-like formatting (optional)
-        subject_str = subject.replace(" ", "_")
-        object_str = obj.replace(" ", "_")
-        predicate_str = predicate.replace(" ", "_")
-
-        predicate_lines.append(f"{predicate_str}({subject_str}, {object_str})")
+        line = f"{predicate}({subject}, {obj})"
+        predicate_lines.append(line)
     
     return predicate_lines
 
@@ -170,37 +173,40 @@ def parse_triples_to_predicates(triples_json):
 
 
 
-def generate_valid_predicates_from_abstract(abstract):
+def generate_valid_predicates_from_abstract(chunks):
     """
-    Orchestrates the process of generating valid FOL predicates from a PubMed abstract.
+    Orchestrates the process of generating valid FOL predicates from a list of abstract chunks.
 
     Args:
-        abstract (str): abstract the article to process.
+        chunks (list of str): List of text chunks from the abstract.
 
     Returns:
-        list: List of FOL predicate strings.
+        list: Combined list of FOL predicate strings from all chunks.
     """
-    
-    # Step 1: Annotate with MedCAT
-    medcat_json = annotate_with_medcat(abstract)
+    all_predicates = []
 
-    # Step 2: Parse MedCAT response
-    parsed_response = parse_medcat_response(medcat_json)
+    for chunk in chunks:
+        # Step 1: Annotate with MedCAT
+        medcat_json = annotate_with_medcat(chunk)
 
-    # Step 3: Generate triples (FOL-like) from concepts via LLM
-    triples_text = generate_triples_from_concepts(parsed_response, FOL_generation_prompt)
+        # Step 2: Parse MedCAT response
+        parsed_response = parse_medcat_response(medcat_json)
 
-    # Step 4: Parse the LLM text output to JSON
-    try:
-        # Strip any backticks or code block indicators
-        clean_text = triples_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
-        triples_json = json.loads(clean_text)
-    except json.JSONDecodeError as e:
-        print("Error parsing triples JSON:", e)
-        print("Raw output was:", triples_text)
-        return []
+        # Step 3: Generate triples (FOL-like) from concepts via LLM
+        triples_text = generate_triples_from_concepts(parsed_response, FOL_generation_prompt)
 
-    # Step 5: Convert to predicates
-    predicates = parse_triples_to_predicates(triples_json)
+        # Step 4: Parse the LLM text output to JSON
+        try:
+            clean_text = triples_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+            triples_json = json.loads(clean_text)
+        except json.JSONDecodeError as e:
+            print(f"[Chunk Error] JSON parsing failed: {e}")
+            print("Raw output:", triples_text)
+            continue  # Skip this chunk
 
-    return predicates
+        # Step 5: Convert to predicates
+        predicates = parse_triples_to_predicates(triples_json)
+        all_predicates.extend(predicates)
+
+    return all_predicates
+
