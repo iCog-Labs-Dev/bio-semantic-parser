@@ -7,7 +7,8 @@
 *.pyc
 __pycache__/
 
-
+# This directory will be created automatically when docker-compose up is run
+/models 
 
 # a text file where i store temporary texts like outputs and code snippets...
 clipboard.txt
