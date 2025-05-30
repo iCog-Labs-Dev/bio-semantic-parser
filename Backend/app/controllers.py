@@ -7,7 +7,13 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-def process_gse_pipeline(gse_id: str) -> list:
+def send_or_log(message, send_progress):
+    if send_progress:
+        send_progress(message)
+    else:
+        logging.info(message)
+
+def process_gse_pipeline(gse_id: str, send_progress) -> list:
     """
     Orchestrates the GSE to predicate pipeline.
     
@@ -18,18 +24,19 @@ def process_gse_pipeline(gse_id: str) -> list:
         list: A list of predicates generated from the GSE and PubMed article.
     """
 
-    logging.info(f"Processing GSE pipeline for ID: {gse_id}")
-    logging.info("Fetching GSE data...")
+    send_or_log("Fetching GSE data...", send_progress)
+ 
     gse_data = fetch_gse_data(gse_id)
     if not gse_data:
         return ["Failed to fetch GSE data"]
     logging.info("GSE data fetched successfully.")
-    logging.info("Extracting PubMed ID...")
+    send_or_log("Extracting PubMed ID...", send_progress)
     pubmed_id = extract_pubmed_id(gse_id)
     if not pubmed_id:
         return ["No PubMed ID found for this GSE"]
     logging.info(f"PubMed ID extracted: {pubmed_id}")
-    logging.info("Fetching PubMed article...")
+    send_or_log("Fetching PubMed article...", send_progress)
+
     # article = fetch_pubmed_article(pubmed_id)
     # if not article:
     #     return ["Failed to fetch PubMed article"]
@@ -45,31 +52,38 @@ def process_gse_pipeline(gse_id: str) -> list:
     logging.info("PubMed article fetched successfully.")
 
     cleanned_article = clean_abstract_text(article)
-    logging.info("chunking abstract...")
+    send_or_log("chunking abstract...", send_progress)
     chunks= chunk_text(cleanned_article)
     if not chunks:
         return ["Failed to chunk the abstract"]
     logging.info("Abstract chunked successfully.")
     
     # logging.info("PubMed article fetched successfully.")
-    logging.info("Generating predicates from abstract...")
+    send_or_log("Generating predicates from abstract...", send_progress)
+
+    # if send_progress:
+    #     send_progress("Generating predicates from abstract...")
+    send_or_log("Generating predicates from abstract...", send_progress)
 
     abstract_predicates = generate_valid_predicates_from_abstract(chunks)
     if not abstract_predicates:
         return ["Failed to generate predicates from abstract"]
     logging.info("Predicates from abstract generated successfully.")
 
-    logging.info("Generating predicates from GSE metadata...")
+    send_or_log("Generating predicates from GSE metadata...", send_progress)
     gse_predicates = generate_valid_predicates_from_gse_metadata(gse_data)
     if not gse_predicates:
         return ["Failed to generate predicates from GSE metadata"]
     logging.info("Predicates from GSE metadata generated successfully.")
 
-    logging.info("Combining predicates...")
+    send_or_log("Combining predicates...", send_progress)
+
     result = {
     "abstract": article,
     "cleanned_abstract": cleanned_article,
     "abstract_predicates": abstract_predicates,
     "gse_metadata_predicates": gse_predicates
         }
+    
+    send_or_log("Done ", send_progress)
     return result
