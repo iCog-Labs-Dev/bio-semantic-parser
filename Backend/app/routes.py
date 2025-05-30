@@ -1,19 +1,41 @@
-from fastapi import APIRouter
-from app.models import UserRequest, APIResponse
-from app.controllers import process_gse_pipeline
+from fastapi import APIRouter, WebSocket, Query, WebSocketDisconnect
+from app.controllers import process_gse_pipeline  # assumed to be a sync function
+import asyncio
+import json
 
 router = APIRouter()
+connections = {}
 
+@router.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await websocket.accept()
+    connections[client_id] = websocket
+    try:
+        while True:
+            await websocket.receive_text()  # keep connection open
+    except WebSocketDisconnect:
+        connections.pop(client_id, None)
 
-@router.post("/process", response_model=APIResponse)
-def process_data(request: UserRequest):
-    return {"result": f"Processed: {request.query}"}
+@router.post("/process")
+async def run_pipeline(client_id: str = Query(...), gse_id: str = Query(...)):
+    if not gse_id:
+        return {"result": "GSE ID is required"}
 
-@router.get("/", tags=["Health Check"])
-def read_root():
-    return {"message": "API is running 🚀"}
+    loop = asyncio.get_running_loop()
 
-@router.get("/pipeline/{gse_id}")
-def run_pipeline(gse_id: str):
-    result = process_gse_pipeline(gse_id)
-    return {"result": str(result)}
+    # async wrapper to send progress
+    async def send_progress(message: str):
+        if client_id in connections:
+            await connections[client_id].send_text(message)
+
+    # sync-safe wrapper
+    def progress_wrapper(message: str):
+        asyncio.run_coroutine_threadsafe(send_progress(message), loop)
+
+    # run sync function in thread pool
+    result = await asyncio.to_thread(process_gse_pipeline, gse_id, send_progress=progress_wrapper)
+
+    if client_id in connections:
+        await connections[client_id].send_text(json.dumps(result))
+
+    return {"status": "ok"}
