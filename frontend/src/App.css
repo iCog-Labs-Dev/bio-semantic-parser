@@ -1,0 +1,171 @@
+/* App.css */
+
+/* === Root Color Palette === */
+:root {
+  --primary: #059669;       /* Emerald-600 */
+  --primary-dark: #047857;  /* Emerald-700 */
+  --background: #f0fdf4;    /* Green-50 */
+  --sidebar-bg: #ffffff;
+  --text: #064e3b;          /* Deep green */
+  --subtext: #4b5563;       /* Gray-600 */
+  --border: #d1fae5;        /* Green-200 */
+  --card-bg: #ffffff;
+  --progress-bg: #bbf7d0;   /* Soft green */
+  --progress-fill: #10b981;/* Green-500 */
+  --danger: #f87171;        /* Red-400 */
+}
+
+/* === Layout === */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background);
+  color: var(--text);
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  /* max-width: 1200px; */
+  margin: 0 auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* === Sidebar === */
+.sidebar {
+  width: 25%;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  padding: 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 0.5rem;
+}
+
+.description {
+  font-size: 0.95rem;
+  color: var(--subtext);
+  margin-bottom: 1.5rem;
+}
+
+/* === Input + Button === */
+.input {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.button {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background-color: var(--primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.button:hover {
+  background-color: var(--primary-dark);
+}
+
+.button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* === Alert === */
+.alert {
+  margin-top: 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: var(--danger);
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+/* === Main Content === */
+.main {
+  width: 75%;
+  padding: 2rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* === Card === */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: auto;
+}
+/* === Code Style Paragraphs === */
+.card p {
+  background-color: #f3f4f6;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.95rem;
+  color: #1f2937;
+  padding: 0.75rem;
+  border-radius: 6px;
+  white-space: pre-wrap;     /* preserve newlines and wrap long lines */
+  word-wrap: break-word;     /* break long words if needed */
+  border: 1px solid #e5e7eb;
+}
+
+
+
+.card-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+  color: var(--primary-dark);
+}
+
+/* === Progress === */
+.progress-container {
+  height: 1rem;
+  background-color: var(--progress-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--progress-fill);
+  transition: width 0.3s ease;
+}
+
+/* === Status === */
+.status-bar {
+  font-size: 0.95rem;
+  color: var(--subtext);
+  margin-bottom: 0.5rem;
+}
