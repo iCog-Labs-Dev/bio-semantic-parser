@@ -3,6 +3,7 @@ from .services.gse_loader import fetch_gse_data
 from .services.abstract_loader import extract_pubmed_id, fetch_pubmed_article, fetch_abstract, chunk_text, clean_abstract_text
 from .services.metadata_to_fol import generate_valid_predicates_from_gse as generate_valid_predicates_from_gse_metadata
 from .services.abstract_to_fol import generate_valid_predicates_from_abstract as generate_valid_predicates_from_abstract
+from .services.fol_to_metta import convert_all_to_metta, validate_metta_lines
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -87,3 +88,18 @@ def process_gse_pipeline(gse_id: str, send_progress) -> list:
     
     send_or_log("Done ", send_progress)
     return result
+
+def convert_fol_string_to_metta(text_block: str) -> dict:
+    """
+    Convert FOL-like multi-line string to MeTTa format.
+    """
+    predicates = [line.strip() for line in text_block.strip().splitlines() if line.strip()]
+    metta_lines = convert_all_to_metta(predicates)
+    valid_lines = validate_metta_lines(metta_lines)
+    invalid_lines = [line for line in metta_lines if line not in valid_lines]
+
+    return {
+        "metta_valid": valid_lines,
+        "metta_invalid": invalid_lines,
+        "original_predicates": predicates
+    }
