@@ -6,6 +6,13 @@ import { v4 as uuidv4 } from 'uuid';
 const backendUrl = process.env.REACT_APP_BACKEND_URL;
 const backendWsUrl = process.env.REACT_APP_BACKEND_WS_URL;
 
+  // private getAppUrl(req: Request): string {
+  //   const env = process.env.NODE_ENV
+  //   const protocol = 'https';
+  //   const host = req.get('host');
+  //   return `${protocol}://${host}/${env}`;
+  // }
+
 if (!backendUrl || !backendWsUrl) {
   console.error('REACT_APP_BACKEND_URL or REACT_APP_BACKEND_WS_URL is not defined in .env file');
   throw new Error('REACT_APP_BACKEND_URL or REACT_APP_BACKEND_WS_URL is not defined in .env file');
