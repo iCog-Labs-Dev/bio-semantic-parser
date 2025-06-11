@@ -39,3 +39,7 @@ def validate_metta_lines(metta_lines: list[str]) -> list[str]:
     Returns only syntactically valid MeTTa lines
     """
     return [line for line in metta_lines if validate_metta_syntax(line)[0]]
+
+def split_predicates(text_block: str):
+    pattern = r'[a-zA-Z_ ]+\([^()]*\)'
+    return re.findall(pattern, text_block)
