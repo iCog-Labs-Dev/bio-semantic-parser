@@ -6,53 +6,58 @@ import { v4 as uuidv4 } from 'uuid';
 const backendUrl = process.env.REACT_APP_BACKEND_URL;
 const backendWsUrl = process.env.REACT_APP_BACKEND_WS_URL;
 
-  // private getAppUrl(req: Request): string {
-  //   const env = process.env.NODE_ENV
-  //   const protocol = 'https';
-  //   const host = req.get('host');
-  //   return `${protocol}://${host}/${env}`;
-  // }
-
 if (!backendUrl || !backendWsUrl) {
   console.error('REACT_APP_BACKEND_URL or REACT_APP_BACKEND_WS_URL is not defined in .env file');
   throw new Error('REACT_APP_BACKEND_URL or REACT_APP_BACKEND_WS_URL is not defined in .env file');
 }
 
-
-
 function App() {
   const [clientId] = useState(uuidv4());
   const [messages, setMessages] = useState([]);
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [gseId, setGseId] = useState('');
+  const [error, setError] = useState('');
+
+  // Validation: Accept GSE followed by 1+ digits
+  const isValidGseId = (id) => /^GSE\d+$/.test(id);
+
+  //general error message
+  const getGseError = (id) => {
+    if (/^G$|^GS$|^GSE$/.test(id) || /^GSE\d*$/.test(id)) return ""; // Allow in-progress typing
+    if (id === "") return "";
+    return "Please enter a valid GEO Series ID starting with 'GSE' followed by digits (e.g., GSE12345).";
+  };
+
+  const startProcess = async () => {
+    if (loading || !isValidGseId(gseId)) return;
+    setLoading(true);
+    setMessages([]);
+    await fetch(`${backendUrl}/process?client_id=${clientId}&gse_id=${gseId}`, {
+      method: 'POST',
+    });
+    // setLoading(false) will be called in ws.onmessage
+  };
 
   useEffect(() => {
     const ws = new WebSocket(`${backendWsUrl}/ws/${clientId}`);
     ws.onmessage = (event) => {
       const message = event.data;
-
-  try {
-    const json = JSON.parse(message);
-    if (json.abstract && json.abstract_predicates && json.gse_metadata_predicates) {
-      setResult(json);
-    } else {
-      setMessages((prev) => [...prev, message]);
-    }
-  } catch {
-    // Not JSON, treat as progress update
-    setMessages((prev) => [...prev, message]);
-  }
-};
+      try {
+        const json = JSON.parse(message);
+        if (json.abstract && json.abstract_predicates && json.gse_metadata_predicates) {
+          setResult(json);
+          setLoading(false);
+        } else {
+          setMessages((prev) => [...prev, message]);
+        }
+      } catch {
+        // Not JSON, treat as progress update
+        setMessages((prev) => [...prev, message]);
+      }
+    };
     return () => ws.close();
   }, [clientId]);
-
-  const [gseId, setGseId] = useState('');
-
-  const startProcess = async () => {
-    setMessages([]);
-    await fetch(`${backendUrl}/process?client_id=${clientId}&gse_id=${gseId}`, {
-      method: 'POST',
-    });
-  };
 
   return (
     <div className="app">
@@ -65,12 +70,36 @@ function App() {
             id="gse-id"
             name="gseId"
             type="text"
-            placeholder="e.g., GSE12345"
+            placeholder={loading ? "Loading..." : "e.g., GSE12345"}
             value={gseId}
-            onChange={(e) => setGseId(e.target.value)}
+            onChange={(e) => {
+              const upperValue = e.target.value.toUpperCase(); // Auto-format to uppercase
+              setGseId(upperValue);
+              setError(getGseError(upperValue));
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !loading && isValidGseId(gseId)) {
+                startProcess();
+              }
+            }}
+            disabled={loading}
           />
-          <button className="button" id="fetch-btn" onClick={startProcess}>Parse</button>
-
+          {error && <div className="error-message">{error}</div>}
+          <button
+            className="button"
+            id="fetch-btn"
+            onClick={startProcess}
+            disabled={loading || !isValidGseId(gseId)}
+          >
+            {loading ? (
+              <>
+                <span className="spinner"></span>
+                Loading...
+              </>
+            ) : (
+              "Parse"
+            )}
+          </button>
           <div className="alert" style={{ display: 'none' }}>
             Connection error: Cannot reach server.
             <div className="card">
@@ -111,7 +140,6 @@ function App() {
       </div>
     </div>
   );
-  
 }
 
 export default App;
