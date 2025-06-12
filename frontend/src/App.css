@@ -9,6 +9,7 @@
   --text: #064e3b;          /* Deep green */
   --subtext: #4b5563;       /* Gray-600 */
   --border: #d1fae5;        /* Green-200 */
+  --border-dark: #bbf7d0;   /* Soft green */
   --card-bg: #ffffff;
   --progress-bg: #bbf7d0;   /* Soft green */
   --progress-fill: #10b981;/* Green-500 */
@@ -120,9 +121,19 @@ body {
 /* === Card === */
 .card {
   background-color: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: auto;
+}
+
+.card-inner{
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-dark);
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-top: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: auto;
 }
@@ -189,4 +200,20 @@ body {
   color: #d32f2f;
   margin-top: 4px;
   font-size: 0.95em;
+}
+
+.metta-code {
+  white-space: pre-wrap;
+  cursor: pointer;
+  font-family: monospace;
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border: 1px solid #e5e7eb;
+  overflow-x: auto;
+}
+.metta-code:hover {
+  background-color: #e5e7eb;
 }

@@ -1,7 +1,7 @@
 import requests
 import re
-from core.prompts import build_prompt
-from core.config import config
+from app.core.prompts import build_prompt
+from app.core.config import config
 
 
 def tokenize(code: str):
