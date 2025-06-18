@@ -5,6 +5,7 @@ from .services.metadata_to_fol import generate_valid_predicates_from_gse as gene
 from .services.abstract_to_fol import generate_valid_predicates_from_abstract as generate_valid_predicates_from_abstract
 from .services.fol_to_metta import convert_all_to_metta, validate_metta_lines, split_predicates
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -53,6 +54,10 @@ def process_gse_pipeline(gse_id: str, send_progress) -> list:
     logging.info("PubMed article fetched successfully.")
 
     cleanned_article = clean_abstract_text(article)
+    abstract_result = {"abstract": article}
+    send_or_log(json.dumps(abstract_result, ensure_ascii=False), send_progress)
+
+
     send_or_log("chunking abstract...", send_progress)
     chunks= chunk_text(cleanned_article)
     if not chunks:
@@ -70,6 +75,8 @@ def process_gse_pipeline(gse_id: str, send_progress) -> list:
     if not abstract_predicates:
         return ["Failed to generate predicates from abstract"]
     logging.info("Predicates from abstract generated successfully.")
+    abstract_predicates_result = {"abstract_predicates": abstract_predicates}
+    send_or_log(json.dumps(abstract_predicates_result, ensure_ascii=False), send_progress)
 
     send_or_log("Generating predicates from GSE metadata...", send_progress)
     gse_predicates = generate_valid_predicates_from_gse_metadata(gse_data)
@@ -77,7 +84,9 @@ def process_gse_pipeline(gse_id: str, send_progress) -> list:
         return ["Failed to generate predicates from GSE metadata"]
     logging.info("Predicates from GSE metadata generated successfully.")
 
-    send_or_log("Combining predicates...", send_progress)
+    gse_predicates_result = {"gse_metadata_predicates": gse_predicates}
+    send_or_log(json.dumps(gse_predicates_result,ensure_ascii=False), send_progress)
+    # send_or_log("Combining predicates...", send_progress)
 
     result = {
     "abstract": article,

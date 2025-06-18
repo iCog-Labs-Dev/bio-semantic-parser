@@ -21,8 +21,11 @@ if (!backendUrl || !backendWsUrl) {
 function App() {
   const [clientId] = useState(uuidv4());
   const [messages, setMessages] = useState([]);
-  const [result, setResult] = useState(null);
+  // const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [abstract, setAbstract] = useState('');
+  const [abstractPredicates, setAbstractPredicates] = useState('');
+  const [gseMetadataPredicates, setGseMetadataPredicates] = useState('');
   const [gseId, setGseId] = useState('');
   const [error, setError] = useState('');
   const [mettaCodeAbstract, setMettaCodeAbstract] = useState(null);
@@ -95,23 +98,40 @@ function App() {
 
   useEffect(() => {
     const ws = new WebSocket(`${backendWsUrl}/ws/${clientId}`);
-    ws.onmessage = (event) => {
-      const message = event.data;
-      try {
-        const json = JSON.parse(message);
-        if (json.abstract && json.abstract_predicates && json.gse_metadata_predicates) {
-          setResult(json);
-          setLoading(false);
-        } else {
-          setMessages((prev) => [...prev, message]);
-        }
-      } catch {
-        // Not JSON, treat as progress update
+
+  ws.onmessage = (event) => {
+    const message = event.data;
+
+    try {
+      const json = JSON.parse(message);
+
+      if (json.abstract) {
+        setAbstract(json.abstract);
+      }
+
+      if (json.abstract_predicates) {
+        setAbstractPredicates(json.abstract_predicates);
+      }
+
+      if (json.gse_metadata_predicates) {
+        setGseMetadataPredicates(json.gse_metadata_predicates);
+        setLoading(false); // Loading ends after GSE metadata is received
+      }
+
+      // If none of the expected fields exist, treat as plain message
+      if (!json.abstract && !json.abstract_predicates && !json.gse_metadata_predicates) {
         setMessages((prev) => [...prev, message]);
       }
-    };
-    return () => ws.close();
-  }, [clientId]);
+
+    } catch {
+      // Not JSON, treat as progress update
+      setMessages((prev) => [...prev, message]);
+    }
+  };
+
+  return () => ws.close();
+}, [clientId]);
+
 
   return (
     <div className="app">
@@ -174,21 +194,21 @@ function App() {
             <div
               className="progress-bar"
               style={{
-                width: `${Math.min((messages.length / 9) * 100, 100)}%`,
+                width: `${Math.min((messages.length / 8) * 100, 100)}%`,
               }}
             ></div>
           </div>
           <div className="card-inner" style={{ flex: 1 }}>
             <div className="card-header">Abstract</div>
-            <p>{result?.abstract || "\n\n \t Abstract will appear here once ready.\n\n"}</p>
+            <p>{abstract || "\n\n \t Abstract will appear here once ready.\n\n"}</p>
           </div>
           <div className="card-inner" style={{ flex: 1 }}>
             <div className="card-header">Abstract Predicates</div>
-            <p>{result?.abstract_predicates || "\n\n \t Abstract predicates will appear here once ready. \n\n"}</p>
+            <p>{abstractPredicates || "\n\n \t Abstract predicates will appear here once ready. \n\n"}</p>
             
-            {result?.abstract_predicates && (
+            {abstractPredicates && (
                 <button className="button" 
-                onClick={() => generateMeTTaCode("abstract_predicates",result.abstract_predicates)}
+                onClick={() => generateMeTTaCode("abstract_predicates",abstractPredicates)}
                 >
                   Generate MeTTa Code
                 </button>
@@ -214,10 +234,10 @@ function App() {
           </div>
           <div className="card-inner" style={{ flex: 1 }}>
             <div className="card-header">GSE Metadata Predicates</div>
-            <p>{result?.gse_metadata_predicates || "\n\n \t GSE metadata predicates will appear here once ready. \n\n"}</p>
-            {result?.gse_metadata_predicates && (
+            <p>{gseMetadataPredicates || "\n\n \t GSE metadata predicates will appear here once ready. \n\n"}</p>
+            {gseMetadataPredicates && (
                 <button className="button" 
-                onClick={() => generateMeTTaCode("gse_metadata_predicates",result.gse_metadata_predicates)}
+                onClick={() => generateMeTTaCode("gse_metadata_predicates",gseMetadataPredicates)}
                 >
                   Generate MeTTa Code
                 </button>
