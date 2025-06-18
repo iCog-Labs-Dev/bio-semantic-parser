@@ -32,6 +32,13 @@ def process_gse_pipeline(gse_id: str, send_progress) -> list:
     if not gse_data:
         return ["Failed to fetch GSE data"]
     logging.info("GSE data fetched successfully.")
+
+    gsms= gse_data.gsms
+    if not gsms:
+        logging.info("No GSMs found in GSE data")
+    gsms_result = {"gsms": list(gsms.keys())}
+    send_or_log(json.dumps(gsms_result, ensure_ascii=False), send_progress)
+
     send_or_log("Extracting PubMed ID...", send_progress)
     pubmed_id = extract_pubmed_id(gse_id)
     if not pubmed_id:
