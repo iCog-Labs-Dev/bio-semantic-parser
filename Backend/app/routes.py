@@ -35,10 +35,11 @@ async def run_pipeline(client_id: str = Query(...), gse_id: str = Query(...)):
         asyncio.run_coroutine_threadsafe(send_progress(message), loop)
 
     # run sync function in thread pool
-    result = await asyncio.to_thread(process_gse_pipeline, gse_id, send_progress=progress_wrapper)
+    # result = await asyncio.to_thread(process_gse_pipeline, gse_id, send_progress=progress_wrapper)
+    await asyncio.to_thread(process_gse_pipeline, gse_id, send_progress=progress_wrapper)
 
-    if client_id in connections:
-        await connections[client_id].send_text(json.dumps(result))
+    # if client_id in connections:
+    #     await connections[client_id].send_text(json.dumps(result))
 
     return {"status": "ok"}
 
