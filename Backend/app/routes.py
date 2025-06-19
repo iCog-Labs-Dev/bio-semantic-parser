@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, Query, WebSocketDisconnect
 from app.controllers import process_gse_pipeline  # assumed to be a sync function
-from app.controllers import convert_fol_string_to_metta
+from app.controllers import convert_fol_string_to_metta, get_gsm_data, gsm_to_metta 
 from fastapi import Body
 import asyncio
 import json
@@ -46,3 +46,16 @@ async def run_pipeline(client_id: str = Query(...), gse_id: str = Query(...)):
 @router.post("/convert_fol_to_metta")
 async def convert_fol_to_metta(predicates_raw_string: str = Body(..., media_type="text/plain")):
     return convert_fol_string_to_metta(predicates_raw_string)
+
+
+@router.post("/get_gsm")
+async def get_gsm(gse_id: str = Query(...), gsm_id: str = Query(...)):
+    # Process the GSM data to generate MeTTa code
+    result= get_gsm_data(gse_id, gsm_id)
+    return result
+
+@router.post("/gsm_to_metta")
+async def generate_metta_from_gsm(gse_id: str = Query(...), gsm_id: str = Query(...)):
+    # Process the GSM data to generate MeTTa code
+    result= gsm_to_metta(gse_id, gsm_id)
+    return result

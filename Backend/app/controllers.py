@@ -1,11 +1,13 @@
 # from .services import fetch_gse_data, extract_pubmed_id, fetch_pubmed_article
-from .services.gse_loader import fetch_gse_data
+from .services.gse_loader import fetch_gse_data, load_gse_data
 from .services.abstract_loader import extract_pubmed_id, fetch_pubmed_article, fetch_abstract, chunk_text, clean_abstract_text
 from .services.metadata_to_fol import generate_valid_predicates_from_gse as generate_valid_predicates_from_gse_metadata
 from .services.abstract_to_fol import generate_valid_predicates_from_abstract as generate_valid_predicates_from_abstract
 from .services.fol_to_metta import convert_all_to_metta, validate_metta_lines, split_predicates
+from .services.gsm_to_metta import generate_metta_from_gsm, load_gsm_data
 import logging
 import json
+import GEOparse
 
 logging.basicConfig(level=logging.INFO)
 
@@ -36,7 +38,13 @@ def process_gse_pipeline(gse_id: str, send_progress) -> list:
     gsms= gse_data.gsms
     if not gsms:
         logging.info("No GSMs found in GSE data")
-    gsms_result = {"gsms": list(gsms.keys())}
+    # gsms_result = {"gsms": list(gsms.keys())}
+    gsms_result = {
+    "gsms": {
+        "gse_id": gse_id,
+        "gsm_ids": list(gsms.keys())
+             }
+        }
     send_or_log(json.dumps(gsms_result, ensure_ascii=False), send_progress)
 
     send_or_log("Extracting PubMed ID...", send_progress)
@@ -120,3 +128,20 @@ def convert_fol_string_to_metta(text_block: str) -> dict:
         "metta_invalid": invalid_lines,
         "original_predicates": predicates
     }
+def get_gsm_data(gse_id: str, gsm_id: str) -> dict:
+
+    gse= load_gse_data(gse_id)
+    data= load_gsm_data(gse, gsm_id)
+
+    return data.head(3)
+
+def gsm_to_metta(gse_id: str, gsm_id: str) -> dict:
+    
+    gse= load_gse_data(gse_id)
+    data= load_gsm_data(gse, gsm_id)
+    metta = generate_metta_from_gsm(data, gsm_id)
+    result_instances = {
+        "table_metta": metta
+    }
+
+    return result_instances
