@@ -214,3 +214,9 @@ Output Format:
 
 
 """
+
+column_name_prompt = """
+    You are a data standardization expert. Convert the following dataset column names into standardized predicate names:
+    {columns}
+    Return a JSON dictionary where keys are original column names and values are standardized predicate names.
+    """
