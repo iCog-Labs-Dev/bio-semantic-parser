@@ -217,3 +217,27 @@ body {
 .metta-code:hover {
   background-color: #e5e7eb;
 }
+
+.gsm-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.gsm-table th,
+.gsm-table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.gsm-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #111827;
+}
+
+.gsm-table tr:nth-child(even) {
+  background-color: #f3f4f6;
+}
