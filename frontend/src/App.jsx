@@ -63,7 +63,7 @@ function App() {
 
       // console.log(predicates);
       const abstractContent = predicates
-      const response = await fetch('http://localhost:8000/get_gsm', {
+      const response = await fetch('http://localhost:8000/convert_fol_to_metta', {
         method: 'POST',
         headers: {
           'accept': 'application/json',
