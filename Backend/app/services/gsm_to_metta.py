@@ -52,7 +52,7 @@ def generate_metta_from_gsm(gsm_data: Union[str, Dict[str, str]], gsm_id: str) -
     - A dictionary containing the MeTTa code.
     """
 
-    sample_data = gsm_data.sample(10)
+    sample_data = gsm_data.sample(15)
     # Create a unique ID by combining row index and GSM ID
     sample_data.insert(0, "Unique_ID", sample_data.index.astype(str) + "_" + gsm_id)
 

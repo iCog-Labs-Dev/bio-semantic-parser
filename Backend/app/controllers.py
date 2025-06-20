@@ -133,7 +133,7 @@ def get_gsm_data(gse_id: str, gsm_id: str) -> dict:
     gse= load_gse_data(gse_id)
     data= load_gsm_data(gse, gsm_id)
 
-    return data.head(3)
+    return data.head(15)
 
 def gsm_to_metta(gse_id: str, gsm_id: str) -> dict:
     
