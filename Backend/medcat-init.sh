@@ -40,5 +40,5 @@ else
 fi
 
 # Start MedCAT
-chmod +x ./start-service-prod.sh
-exec ./start-service-prod.sh
+chmod +x ./start_service_production.sh
+exec ./start_service_production.sh
