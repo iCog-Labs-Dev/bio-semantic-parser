@@ -57,5 +57,3 @@ http://localhost:3030/
 
 You should see the Bio Semantic Parsing interface ready to accept GSE IDs.
 
-```
-
