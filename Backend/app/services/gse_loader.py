@@ -13,27 +13,13 @@ def fetch_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
     """
     try:               
         gse = GEOparse.get_GEO(geo=gse_id, destdir="./data", silent=True)
-        # gse = GEOparse.get_GEO(geo=gse_id, silent=True)  # No writing to disk
 
         if not gse:
             return {"error": "not_found", "message": f"{gse_id} not found in GEO database"}
-        # print("Successfully fetched GSE data.")
         return gse
     except Exception as e:
         print(f"Error fetching GSE {gse_id} with GEOparse: {e}")
         return None
-
-
-# gse= fetch_gse_data("GSE12277")
-# metadata = gse.metadata
-# print(json.dumps(metadata, indent=2))
-
-
-
-# gse= GEOparse.get_GEO(geo="GSE17833")
-# Ensure gse_ is a GSE object
-# gse = gse if isinstance(gse, GEOparse.GEOTypes.GSE) else None
-# print("GSE object:", gse_)
 
 def load_gse_data(gse_id: str) -> Union[str, Dict[str, str]]:
     """

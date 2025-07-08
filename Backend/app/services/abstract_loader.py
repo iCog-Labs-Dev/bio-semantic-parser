@@ -33,7 +33,7 @@ def fetch_pmc_pdf(pmc_id):
     pdf_url = f"https://pmc.ncbi.nlm.nih.gov/articles/PMC{pmc_id}/pdf/"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }  # Replace with your actual User-Agent
+    }  
     try:
         response = requests.get(pdf_url, headers=headers)
         response.raise_for_status()
@@ -71,23 +71,10 @@ def fetch_pubmed_article(pmid, api_key: Optional[str] = NCBI_API_KEY):
     if pmc_id:
         pdf_content = fetch_pmc_pdf(pmc_id)
         if pdf_content:
-            # print(f"Successfully fetched PDF for PMC ID: {pmc_id}")
             return pdf_content  # Return the PDF as binary data
     
     # If no full text is found, return abstract
     return fetch_abstract(pmid, api_key)
-
-
-
-##### Test case for the above the methods
-
-# pmid = "30092180"  # Example PubMed ID
-# result = fetch_pubmed_article(pmid)
-# if isinstance(result, bytes):
-#     print("PDF downloaded successfully (binary data).")
-# else:
-#     print("Abstract:", result)
-
 
 def fetch_gse_summary(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Union[str, Dict[str, str]]:
    
@@ -138,15 +125,6 @@ def fetch_gse_summary(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Uni
     summary_data = summary_response.json()
     return summary_data                   
 
-    
-##### Test case for the above the method
-
-# result = fetch_gse_summary("GSE12277")
-# import json
-# print(json.dumps(result, indent=2)) 
-
-
-
 def extract_pubmed_id(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Optional[str]:
     """
     Extracts the PubMed ID associated with a given GSE ID using NCBI Entrez utilities.
@@ -161,7 +139,7 @@ def extract_pubmed_id(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Opt
     base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
     headers = {"User-Agent": "GSE_PubMed_Fetcher/1.0"}
 
-    # Step 1: Search for the UID
+    # Search for the UID
     search_params = {
         "db": "gds",
         "term": f"{gse_id}[Accession]",
@@ -177,7 +155,7 @@ def extract_pubmed_id(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Opt
             return None
         uid = id_list[0]
 
-        # Step 2: Get the summary to extract PubMed IDs
+        # Get the summary to extract PubMed IDs
         summary_params = {
             "db": "gds",
             "id": uid,
@@ -194,14 +172,14 @@ def extract_pubmed_id(gse_id: str, api_key: Optional[str] = NCBI_API_KEY) -> Opt
         return None
 
 def clean_abstract_text(text):
-    # 1. Remove metadata lines like FAU, AU, AD, etc.
+    # Remove metadata lines like FAU, AU, AD, etc.
     text = re.sub(r"^(FAU|AU|AD|LA|SI)\s+-.*$", "", text, flags=re.MULTILINE)
     
-    # 2. Replace `\n` and excessive whitespace with single space
+    # Replace `\n` and excessive whitespace with single space
     text = text.replace('\n', ' ')
     text = re.sub(r'\s{2,}', ' ', text)
 
-    # 3. Trim leading/trailing spaces
+    # Trim leading/trailing spaces
     text = text.strip()
 
     return text
@@ -209,12 +187,3 @@ def clean_abstract_text(text):
 def chunk_text(text, max_tokens=300):
     tokens = tokenizer.encode(text)
     return [tokenizer.decode(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
-
-# text="""
-# Ionic liquids (ILs) are increasingly receiving interest for a wide range of applications. However, for many applications their cost and/or viscosity can be too high. This can be addressed by using protic ionic liquids as cheaper alternatives, and through mixing with molecular solvents. However, mixing ILs with a molecular solvent adds another dimension to the compositional space, as well as increasing the complexity of solvent-solute interactions. In this study, we have investigated the solvation properties of binary mixtures of PILs with molecular solvents. The selected binary solvent systems are the PILs ethylammonium nitrate (EAN) and propylammonium nitrate (PAN) combined with either water, methanol, acetonitrile or DMSO. In addition, water is combined with the other molecular solvents for comparison. The mole fractions of the secondary solvents were 0, 0.25, 0.5, 0.75, 0.9 and 1 for all combinations, which resulted in a total of 66 solvent mixtures. The solvation properties in each of these mixtures were determined from spectroscopic measurements of 4 well-known solvatochromic probe molecules as solutes. The solvation properties were comparatively investigated, and interpreted, in terms of the specific and non-specific interactions between PIL-solvent, PIL-solute and solvent-solute. All 66 solvent mixtures were also analysed using FTIR with no probe molecules present. In addition, through molecular dynamics simulations, the dye-solvent interactions were simulated for two of the dye molecules in water-EAN binary systems, and the radial distribution functions for the key interactions were obtained. The results showed that the solvation parameters of the binary mixtures deviated considerably from the ideal solvation behaviour. In many cases, bulk compositions and the estimated excess compositions in the solvation shells of the probes were different, suggesting preferential solvation, the extent of which is solute dependent. Our results clearly show that using PILs in a mixture with molecular solvents can strongly enhance the solvation capability.
-
-# """
-
-# chunks= chunk_text(text)
-# for i, chunk in enumerate(chunks):
-#     print(f"Chunk {i+1}:\n{chunk}\n")

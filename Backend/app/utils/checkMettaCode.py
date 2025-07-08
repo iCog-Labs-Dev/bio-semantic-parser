@@ -64,7 +64,7 @@ def explain_metta_error_groq(code: str, error_info: str) -> str:
             {"role": "user", "content": prompt}
         ]
     }
-    # For now don`t use this one, it will used for to suggest to user how to fix metta syntax
+    # For now we don`t use this one, it will used for to suggest to user how to fix metta syntax
     response = requests.post("https://api.groq.com/openai/v1/chat/completions", json=data, headers=headers)
     return response.json()['choices'][0]['message']['content'].strip()
    
