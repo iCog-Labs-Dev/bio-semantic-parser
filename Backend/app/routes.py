@@ -34,13 +34,7 @@ async def run_pipeline(client_id: str = Query(...), gse_id: str = Query(...)):
     def progress_wrapper(message: str):
         asyncio.run_coroutine_threadsafe(send_progress(message), loop)
 
-    # run sync function in thread pool
-    # result = await asyncio.to_thread(process_gse_pipeline, gse_id, send_progress=progress_wrapper)
     await asyncio.to_thread(process_gse_pipeline, gse_id, send_progress=progress_wrapper)
-
-    # if client_id in connections:
-    #     await connections[client_id].send_text(json.dumps(result))
-
     return {"status": "ok"}
 
 @router.post("/convert_fol_to_metta")
@@ -50,7 +44,6 @@ async def convert_fol_to_metta(predicates_raw_string: str = Body(..., media_type
 
 @router.post("/get_gsm")
 async def get_gsm(gse_id: str = Query(...), gsm_id: str = Query(...)):
-    # Process the GSM data to generate MeTTa code
     result= get_gsm_data(gse_id, gsm_id)
     return result
 

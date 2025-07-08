@@ -4,7 +4,6 @@ from app.services.abstract_loader import extract_pubmed_id, fetch_abstract
 import warnings
 import pandas as pd
 
-# Replace with a known valid GSE ID with linked PubMed ID
 KNOWN_GSE_ID = "GSE12277"
 
 @pytest.mark.integration

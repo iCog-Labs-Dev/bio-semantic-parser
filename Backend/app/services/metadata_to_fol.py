@@ -113,10 +113,3 @@ def generate_valid_predicates_from_gse(gse):
     valid_predicates = extract_valid_predicates(all_predicates)
     return valid_predicates
 
-
-
-# valid_predicates = generate_valid_predicates_from_gse(gse)
-
-# print("Valid predicates extracted:")
-# for predicate in valid_predicates:
-#     print(predicate)
