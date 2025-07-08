@@ -13,6 +13,9 @@ By converting unstructured biomedical data into formal representations (MeTTa / 
   - Converts both the abstract and GSE metadata into **MeTTa format**
   - Prepares the data for **Atomspace representation**
 
+![diagram-export-7-8-2025-10_55_00-AM](https://github.com/user-attachments/assets/2d845b55-e6a1-4667-b4e6-9a465aaa4e9d)
+
+
 ## 🛠️ Installation & Usage
 
 ### 1. Clone the Repository
