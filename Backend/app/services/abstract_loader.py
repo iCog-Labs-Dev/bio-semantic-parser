@@ -3,6 +3,8 @@ from app.core.config import config
 from typing import Optional, Union, Dict
 import re
 import tiktoken
+from io import BytesIO
+from bs4 import BeautifulSoup
 
 NCBI_API_KEY = config.NCBI_API_KEY
 
@@ -29,18 +31,78 @@ def fetch_pmc_id(pmid, api_key):
                     return link["links"][0]  # Return first PMC ID found
     return None
 
-def fetch_pmc_pdf(pmc_id):
-    pdf_url = f"https://pmc.ncbi.nlm.nih.gov/articles/PMC{pmc_id}/pdf/"
+def remove_boilerplate_sections(xml_soup):
+    """
+    Removes sections like acknowledgements, references, etc. from the XML soup.
+    """
+    boilerplate_titles = {
+        "acknowledgements", "conflict of interest", "funding", "author contributions",
+        "ethics statement", "data availability", "references", "supplementary material"
+    }
+
+    clean_sections = []
+    for sec in xml_soup.find_all("sec"):
+        title_tag = sec.find("title")
+        title = title_tag.get_text(strip=True).lower() if title_tag else ""
+        if title not in boilerplate_titles:
+            clean_sections.append(sec)
+
+    return clean_sections
+
+def chunk_sections(sections, max_length=1000):
+    """
+    Takes clean sections (BeautifulSoup elements), and chunks them into text blocks.
+    Each section is treated as a chunk unless it's too long, then it's split into paragraphs.
+    """
+    chunks = []
+    for sec in sections:
+        text = sec.get_text(separator=" ", strip=True)
+        if len(text) <= max_length:
+            chunks.append(text)
+        else:
+            # Break into paragraphs if needed
+            for p in sec.find_all("p"):
+                p_text = p.get_text(separator=" ", strip=True)
+                if p_text:
+                    chunks.append(p_text)
+    return chunks
+
+def fetch_pmc_fulltext(pmc_id):
+    url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/PMC{pmc_id}/fullTextXML"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }  
+        "User-Agent": "Mozilla/5.0"
+    }
+
     try:
-        response = requests.get(pdf_url, headers=headers)
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
-        return response.content
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching PDF for PMC{pmc_id}: {e}")
+        soup = BeautifulSoup(response.text, 'xml')
+        return soup
+
+    except Exception as e:
+        print(f"Error fetching PMC fulltext for PMC{pmc_id}: {e}")
         return None
+
+# Test case
+# pdf_text = fetch_pmc_fulltext("6761689")
+# print(pdf_text)
+
+# pdf_section_titles = [sec.find("title").get_text(strip=True) if sec.find("title") else "No Title" for sec in pdf_text.find_all("sec")]
+# print(pdf_section_titles)
+
+# cleaned_sections = remove_boilerplate_sections(pdf_text)
+# print(f"Number of sections after cleaning: {len(cleaned_sections)}")
+# for sec in cleaned_sections:
+#     print(sec.get_text(separator=' ', strip=True)[:1000])  # Print first 1000 characters
+
+# section_titles = [sec.find("title").get_text(strip=True) if sec.find("title") else "No Title" for sec in cleaned_sections]
+# print(section_titles)
+
+# chunked_sections = chunk_sections(cleaned_sections)
+# print(f"Number of chunks: {len(chunked_sections)}")
+
+# print("chunks:", [chunk[:1000] for chunk in chunked_sections])
+
 
 def fetch_abstract(pmid, api_key: Optional[str] = NCBI_API_KEY):
     """Retrieve only the abstract of a PubMed article."""
