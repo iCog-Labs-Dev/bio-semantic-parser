@@ -12,3 +12,6 @@ __pycache__/
 
 # a text file where i store temporary texts like outputs and code snippets...
 clipboard.txt
+output
+.venv
+temp_pdfs

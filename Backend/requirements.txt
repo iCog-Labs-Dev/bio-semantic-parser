@@ -7,3 +7,6 @@ GEOparse
 openai
 tiktoken
 bs4
+PyPDF2
+arxiv
+openai
