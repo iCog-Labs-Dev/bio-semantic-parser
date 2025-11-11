@@ -12,6 +12,7 @@ import PyPDF2
 import arxiv
 import openai
 from dotenv import load_dotenv
+from app.utils.ai_provider import ai_generate
 
 load_dotenv()
 
@@ -176,7 +177,6 @@ class FOLExtractor:
     """Handles FOL triple extraction using LLM with broad bio-domain focus"""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.client = openai.OpenAI(api_key=api_key or os.getenv('OPENAI_API_KEY'))
         self.logger = lambda msg: print(f"[FOLExtractor] {msg}")
 
     def extract_triples(self, text_chunk: str) -> List[FOLTriple]:
@@ -184,12 +184,12 @@ class FOLExtractor:
         try:
             prompt = self._build_prompt(text_chunk)
 
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+            response = ai_generate(
                 messages=[
                     {"role": "system", "content": self._get_system_prompt()},
                     {"role": "user", "content": prompt}
                 ],
+                model=None,
                 max_tokens=1400,
                 temperature=0.15
             )
