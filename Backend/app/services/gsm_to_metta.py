@@ -67,8 +67,12 @@ def generate_metta_from_gsm(gsm_data: Union[str, Dict[str, str]], gsm_id: str) -
     {'role':'user', 'content':filled_prompt}
     ]
     response = openai_generate(messages=messages)
-    predicate_mapping = response.choices[0].message.content.strip()
-    predicate_mapping = json.loads(predicate_mapping)
+    predicate_mapping_text = response.choices[0].message.content.strip()
+    
+    # Clean markdown
+    predicate_mapping_text = predicate_mapping_text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    
+    predicate_mapping = json.loads(predicate_mapping_text)
 
     instances= declare_instances(sample_data, predicate_mapping)
 

@@ -5,6 +5,7 @@ import re
 import tiktoken
 from io import BytesIO
 from bs4 import BeautifulSoup
+from app.utils.ai_provider import chunk_text_by_provider
 
 NCBI_API_KEY = config.NCBI_API_KEY
 
@@ -247,5 +248,5 @@ def clean_abstract_text(text):
     return text
 
 def chunk_text(text, max_tokens=300):
-    tokens = tokenizer.encode(text)
-    return [tokenizer.decode(tokens[i:i + max_tokens]) for i in range(0, len(tokens), max_tokens)]
+    # provider-aware chunker to support different llms
+    return chunk_text_by_provider(text, max_tokens=max_tokens)
