@@ -45,7 +45,12 @@ if [ ! -d "$META_DIR" ]; then
     download_model "$MODEL_DIR/mc_status.zip" \
         https://cogstack-medcat-example-models.s3.eu-west-2.amazonaws.com/medcat-example-models/mc_status.zip
     mkdir -p "$META_DIR.tmp"
-    unzip -oq "$MODEL_DIR/mc_status.zip" -d "$META_DIR.tmp"
+    if ! unzip -oq "$MODEL_DIR/mc_status.zip" -d "$META_DIR.tmp"; then
+        echo "MetaCAT extraction failed; removing cached archive and staged files before retry." >&2
+        rm -f -- "$MODEL_DIR/mc_status.zip"
+        rm -rf -- "$META_DIR.tmp"
+        exit 1
+    fi
     mv "$META_DIR.tmp" "$META_DIR"
     rm "$MODEL_DIR/mc_status.zip"
 else

@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import zipfile
 
 
 BACKEND = Path(__file__).resolve().parents[3]
@@ -108,6 +109,55 @@ exit 1
         result = self.start()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((self.models / "mc_status/config.json").exists())
+
+    @unittest.skipUnless(shutil.which("unzip"), "unzip is required for the archive regression")
+    def test_corrupt_cached_archive_is_removed_and_redownloaded(self):
+        self.models.mkdir()
+        (self.models / "medmen.cdb").write_text("cached concept database")
+        (self.models / "vocab.dat").write_text("cached vocabulary")
+        archive = self.models / "mc_status.zip"
+        archive.write_bytes(b"corrupt archive returned by a previous download")
+        staged = self.models / "mc_status.tmp"
+        staged.mkdir()
+        (staged / "partial-model").write_text("incomplete extraction")
+
+        # Use the real unzip command so recovery depends on replacing the bytes.
+        (self.bin_dir / "unzip").unlink()
+        with zipfile.ZipFile(self.root / "source.zip", "w") as fresh:
+            fresh.writestr("config.json", '{"model": "fresh"}')
+        self.stub("curl", """#!/bin/bash
+set -e
+while [ "$#" -gt 0 ]; do
+    if [ "$1" = "--output" ]; then
+        output="$2"
+        shift
+    fi
+    shift
+done
+echo download >> "$MOCK_ROOT/downloads"
+cp "$MOCK_ROOT/source.zip" "$output"
+""")
+
+        result = self.start()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(archive.exists(), "Corrupt archives must not survive a failed extraction")
+        self.assertFalse(staged.exists(), "Partial extraction files must be removed")
+        self.assertFalse((self.models / "mc_status").exists())
+        self.assertFalse((self.root / "ready").exists())
+        self.assertFalse((self.root / "downloads").exists())
+
+        result = self.start()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.root / "ready").exists())
+        self.assertEqual(
+            (self.models / "mc_status/config.json").read_text(), '{"model": "fresh"}'
+        )
+        self.assertFalse((self.models / "mc_status/partial-model").exists())
+        self.assertFalse(archive.exists())
+        self.assertFalse(staged.exists())
+        self.assertEqual((self.root / "downloads").read_text().splitlines(), ["download"])
+        self.assertEqual((self.models / "medmen.cdb").read_text(), "cached concept database")
+        self.assertEqual((self.models / "vocab.dat").read_text(), "cached vocabulary")
 
 
 @unittest.skipUnless(shutil.which("docker"), "Docker Compose CLI is required")
