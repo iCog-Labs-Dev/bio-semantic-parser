@@ -1,9 +1,10 @@
 services:
   medcat-service:
-    image: cogstacksystems/medcat-service:latest
+    image: cogstacksystems/medcat-service:v1.1.1
+    platform: linux/amd64
     container_name: medcat-service
     ports:
-      - "5000:5000"
+      - "${MEDCAT_PORT:-5000}:5000"
     volumes:
       - ./models:/cat/models:rw
       - ./medcat-init.sh:/medcat-init.sh:ro
@@ -14,8 +15,7 @@ services:
     environment:
       - APP_MODEL_CDB_PATH=/cat/models/medmen.cdb
       - APP_MODEL_VOCAB_PATH=/cat/models/vocab.dat
-      - env-file=env/app.env \
-      - env-file=env/medcat.env \
+      - SPACY_MODEL=en_core_web_md
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/info"]
       interval: 30s
@@ -26,29 +26,37 @@ services:
   fastapi-backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: fastapi-backend
+    restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8010}:8000"
     depends_on:
       medcat-service:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       - MEDCAT_URL=http://medcat-service:5000/api/process
     volumes:
       - .:/app
     working_dir: /app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     networks:
       - app-network
 
   frontend:
     build:
       context: ../frontend
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: react-frontend
+    restart: unless-stopped
     ports:
-      - "3030:3030"
+      - "${FRONTEND_PORT:-3030}:3030"
+    environment:
+      - HOST=0.0.0.0
+      - REACT_APP_BACKEND_URL=http://${PUBLIC_HOST:-localhost}:${BACKEND_PORT:-8010}
+      - REACT_APP_BACKEND_WS_URL=ws://${PUBLIC_HOST:-localhost}:${BACKEND_PORT:-8010}
     depends_on:
       - fastapi-backend
     networks:

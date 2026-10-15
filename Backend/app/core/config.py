@@ -3,14 +3,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 class Config:
-    NCBI_API_KEY= os.getenv("NCBI_API_KEY")
+    NCBI_API_KEY = os.getenv("NCBI_API_KEY") or None
     GROQ_API_KEY = os.getenv("API_KEY")
-    MEDCAT_URL = os.getenv("MEDCAT_URL","http://localhost:5000")
+    MEDCAT_URL = os.getenv("MEDCAT_URL", "http://localhost:5000/api/process")
 
     AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").lower()
 
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    OPENAI_MODEL = "gpt-4"
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4")
     OPENAI_TEMPERATURE = 0.0
     OPENAI_MAX_TOKENS = 4096
 

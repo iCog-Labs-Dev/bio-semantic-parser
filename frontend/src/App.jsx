@@ -1,6 +1,7 @@
 import './App.css';
 import { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { parseGsmTable } from './gsmTable';
 
 const backendUrl = process.env.REACT_APP_BACKEND_URL;
 const backendWsUrl = process.env.REACT_APP_BACKEND_WS_URL;
@@ -34,7 +35,11 @@ function App() {
   const [selectedGsm, setSelectedGsm] = useState('');
   const [dropdownEnabled, setDropdownEnabled] = useState(false);
   const [gsmTableData, setGsmTableData] = useState(null);
+  const [gsmLoading, setGsmLoading] = useState(false);
+  const [gsmError, setGsmError] = useState('');
+  const gsmRequestId = useRef(0);
   const tableRef = useRef(null);
+  const hasGsmRows = (gsmTableData?.rowKeys.length ?? 0) > 0;
 
 
   // Validation: Accept GSE followed by 1+ digits
@@ -63,7 +68,7 @@ function App() {
 
       // console.log(predicates);
       const abstractContent = predicates
-      const response = await fetch('http://localhost:8000/convert_fol_to_metta', {
+      const response = await fetch(`${backendUrl}/convert_fol_to_metta`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -114,6 +119,11 @@ function App() {
           setGsmList(json.gsms.gsm_ids);
           setDropdownEnabled(true);
           setSelectedGsm('');
+          gsmRequestId.current += 1;
+          setGsmTableData(null);
+          setMettaCodeGSM(null);
+          setGsmLoading(false);
+          setGsmError('');
         }
 
         if (json.abstract) {
@@ -141,13 +151,21 @@ function App() {
       }
     };
 
-    return () => ws.close();
+    return () => {
+      gsmRequestId.current += 1;
+      ws.close();
+    };
   }, [clientId]);
 
   // The handler for GSM selection
   const fetchGsmData = async (gsmId) => {
+    const requestId = ++gsmRequestId.current;
+    setGsmTableData(null);
+    setMettaCodeGSM(null);
+    setGsmError('');
+    setGsmLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/get_gsm?gse_id=${gseId}&gsm_id=${gsmId}`, {
+      const response = await fetch(`${backendUrl}/get_gsm?gse_id=${gseId}&gsm_id=${gsmId}`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -155,32 +173,34 @@ function App() {
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch GSM data');
+      if (!response.ok) throw new Error(`Failed to fetch GSM data (HTTP ${response.status}).`);
 
       const data = await response.json();
 
-      // Save GSM table data (assuming this is the main response structure)
-      setGsmTableData(data);
-
-      // Scroll into view
-      console.log(gsmTableData);
+      if (requestId !== gsmRequestId.current) return;
+      setGsmTableData(parseGsmTable(data));
 
       setTimeout(() => {
-        if (tableRef.current) {
+        if (requestId === gsmRequestId.current && tableRef.current) {
           tableRef.current.scrollIntoView({ behavior: 'smooth' });
         }
       }, 100);
 
     } catch (error) {
-      console.error(error);
-      alert('Error fetching GSM data');
+      if (requestId === gsmRequestId.current) {
+        setGsmError(`Unable to load GSM table: ${error?.message || 'Please try again.'}`);
+      }
+    } finally {
+      if (requestId === gsmRequestId.current) setGsmLoading(false);
     }
   };
 
   const generateMeTTaCodeForGsm = async () => {
+    if (!hasGsmRows || gsmLoading) return;
+    const requestId = gsmRequestId.current;
     try {
       const gsmId = selectedGsm;
-      const response = await fetch(`http://localhost:8000/gsm_to_metta?gse_id=${gseId}&gsm_id=${gsmId}`, {
+      const response = await fetch(`${backendUrl}/gsm_to_metta?gse_id=${gseId}&gsm_id=${gsmId}`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -191,10 +211,12 @@ function App() {
       if (!response.ok) throw new Error('Failed to fetch GSM data');
 
       const gsmMetta = await response.json();
+      if (requestId !== gsmRequestId.current) return;
       setMettaCodeGSM(gsmMetta.table_metta || []);
 
     }
     catch (error) {
+      if (requestId !== gsmRequestId.current) return;
       console.error(error);
       alert('Error generating MeTTa code for GSM data');
     }
@@ -258,6 +280,7 @@ function App() {
 
             <select
               className="input"
+              aria-label="Select GSM"
               value={selectedGsm}
               onChange={(e) => {
                 setSelectedGsm(e.target.value);
@@ -348,57 +371,63 @@ function App() {
 
           </div>
 
-          {gsmTableData && (
+          {selectedGsm && (
             <div
               ref={tableRef}
               className="card"
               style={{ marginTop: '2rem', overflowX: 'auto' }}
             >
               <div className="card-header">GSM Data Table </div>
-              <table className="gsm-table">
-                <thead>
-                  <tr>
-                    {Object.keys(gsmTableData).map((col, idx) => (
-                      <th key={idx}>{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.values(gsmTableData[Object.keys(gsmTableData)[0]]).map((_, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {Object.keys(gsmTableData).map((col, colIndex) => (
-                        <td key={colIndex}>{gsmTableData[col][rowIndex]}</td>
+              {gsmLoading ? (
+                <p role="status">Loading GSM table...</p>
+              ) : gsmError ? (
+                <div role="alert" className="error-message">{gsmError}</div>
+              ) : !hasGsmRows ? (
+                <p role="status">No table data available for this GSM</p>
+              ) : (
+                <>
+                  <table className="gsm-table">
+                    <thead>
+                      <tr>
+                        {gsmTableData.columns.map((col) => (
+                          <th key={col}>{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {gsmTableData.rowKeys.map((rowKey) => (
+                        <tr key={rowKey}>
+                          {gsmTableData.columns.map((col) => (
+                            <td key={col}>{String(gsmTableData.data[col][rowKey] ?? '')}</td>
+                          ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </tbody>
+                  </table>
 
-              {gsmTableData && (
-                <button className="button"
-                  onClick={() => generateMeTTaCodeForGsm()}
-                >
-                  Generate MeTTa Code
-                </button>
-              )}
-
-              {mettaCodeGSM && (
-                <div className="card" style={{ marginTop: '1rem' }}>
-                  <div className="card-header">Generated MeTTa Code</div>
-                  <pre
-                    className="metta-code"
-                    onClick={() => {
-                      navigator.clipboard.writeText(mettaCodeGSM.join('\n'));
-                      alert('MeTTa code copied to clipboard!');
-                    }}
-                    title="Click to copy"
+                  <button className="button"
+                    onClick={() => generateMeTTaCodeForGsm()}
                   >
-                    <code>{mettaCodeGSM.join('\n')}</code>
-                  </pre>
-                </div>
+                    Generate MeTTa Code
+                  </button>
+
+                  {mettaCodeGSM && (
+                    <div className="card" style={{ marginTop: '1rem' }}>
+                      <div className="card-header">Generated MeTTa Code</div>
+                      <pre
+                        className="metta-code"
+                        onClick={() => {
+                          navigator.clipboard.writeText(mettaCodeGSM.join('\n'));
+                          alert('MeTTa code copied to clipboard!');
+                        }}
+                        title="Click to copy"
+                      >
+                        <code>{mettaCodeGSM.join('\n')}</code>
+                      </pre>
+                    </div>
+                  )}
+                </>
               )}
-
-
             </div>
           )}
 
