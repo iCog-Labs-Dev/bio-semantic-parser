@@ -96,16 +96,6 @@ body {
 }
 
 /* === Alert === */
-.alert {
-  margin-top: 1rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: var(--danger);
-  padding: 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-}
-
 /* === Main Content === */
 .main {
   width: 75%;
@@ -160,20 +150,6 @@ body {
 }
 
 /* === Progress === */
-.progress-container {
-  height: 1rem;
-  background-color: var(--progress-bg);
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 1rem 0;
-}
-
-.progress-bar {
-  height: 100%;
-  background-color: var(--progress-fill);
-  transition: width 0.3s ease;
-}
-
 /* === Status === */
 .status-bar {
   font-size: 0.95rem;
@@ -204,7 +180,6 @@ body {
 
 .metta-code {
   white-space: pre-wrap;
-  cursor: pointer;
   font-family: monospace;
   background-color: #f3f4f6;
   padding: 1rem;
@@ -214,10 +189,6 @@ body {
   border: 1px solid #e5e7eb;
   overflow-x: auto;
 }
-.metta-code:hover {
-  background-color: #e5e7eb;
-}
-
 .gsm-table {
   width: 100%;
   border-collapse: collapse;
@@ -240,4 +211,74 @@ body {
 
 .gsm-table tr:nth-child(even) {
   background-color: #f3f4f6;
+}
+
+.input { box-sizing: border-box; }
+.sidebar { flex: 0 0 300px; }
+.main { flex: 1; min-width: 0; }
+.input-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
+.error-message { margin: -0.5rem 0 1rem; }
+.connection-status { font-size: 0.8rem; color: var(--subtext); margin: 0.75rem 0; }
+.sample-picker { margin-top: 1.5rem; }
+.study-label { font-size: 0.85rem; font-weight: 400; color: var(--subtext); margin-left: 0.5rem; }
+.empty-state { padding: 0.75rem 0; color: var(--subtext); font-size: 0.9rem; line-height: 1.6; }
+.card p.abstract-text { font-family: inherit; line-height: 1.6; }
+.card p.abstract-text, .card p.predicate-text { max-height: 22rem; overflow: auto; }
+
+.error-notice {
+  background: #fff8f7;
+  border: 1px solid #ead2ce;
+  border-left: 3px solid #b45343;
+  border-radius: 6px;
+  color: #783f35;
+  padding: 1rem 1.1rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.error-notice strong { display: block; font-size: 0.95rem; color: #71382e; }
+.notice-description { margin: 0.25rem 0 0.75rem; max-width: 75ch; }
+.error-notice details { margin-top: 0.75rem; color: #615652; font-size: 0.8rem; }
+.error-notice summary { cursor: pointer; width: fit-content; }
+.error-notice pre {
+  max-height: 12rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+  background: #fff;
+  border: 1px solid #eadedb;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+.secondary-button {
+  border: 1px solid #c6ceca;
+  border-radius: 5px;
+  background: #fff;
+  color: #374c43;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.secondary-button:hover { background: #f3f6f4; }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--primary-dark); outline-offset: 3px; }
+.conversion { margin-top: 1rem; }
+.code-output { margin-top: 1.25rem; }
+.code-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.9rem; }
+.copy-status { font-size: 0.85rem; color: var(--subtext); line-height: 1.5; }
+.table-scroll { overflow-x: auto; }
+.activity-bar { height: 3px; background: var(--border); border-radius: 3px; margin: 1rem 0; overflow: hidden; }
+.activity-bar::after { content: ''; display: block; width: 35%; height: 100%; background: var(--primary); animation: activity 1.6s ease-in-out infinite; }
+@keyframes activity { from { transform: translateX(-100%); } to { transform: translateX(390%); } }
+@media (prefers-reduced-motion: reduce) {
+  .activity-bar::after { animation: none; width: 100%; opacity: 0.6; }
+  .spinner { animation: none; }
+}
+@media (max-width: 760px) {
+  .app { flex-direction: column; height: auto; min-height: 100vh; }
+  .sidebar { width: 100%; flex-basis: auto; padding: 1.25rem; border-right: 0; border-bottom: 1px solid var(--border); }
+  .main { width: 100%; padding: 1rem; overflow-y: visible; }
 }

@@ -238,3 +238,18 @@ npm run build
 These checks cover software behavior. They do not evaluate extraction quality
 or replace a live GEO, MedCAT, and LLM experiment.
 
+The interface reports request failures beside the affected extraction, sample,
+or MeTTa conversion, with a retry action and collapsed technical details.
+Results already received remain available after a failure. If the progress
+connection drops, use **Reconnect**; this does not restart a running request or
+recover missed updates. A finished request without complete progress updates is
+marked as potentially incomplete. On HTTP deployments where clipboard access
+is unavailable, select and copy the generated code manually.
+
+For a manual table-preview check, try `GSE12277` and `GSM308237`: the
+[GEO sample record](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM308237)
+contains an expression table. For an empty-table case, `GSE183947` and
+[`GSM5574685`](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5574685)
+have no sample-level SOFT table rows. The current preview reads these rows;
+it does not load separate SRA or supplementary datasets.
+
