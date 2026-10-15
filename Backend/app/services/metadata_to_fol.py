@@ -3,6 +3,8 @@ import re
 from app.core.prompts import predicate_instruction
 from app.core.prompts import refinement_prompt
 from app.core.aspects import annotation_aspects_list
+from app.core.config import config
+from app.utils.demo_limits import truncate_text
 
 
 
@@ -19,23 +21,39 @@ def format_metadata(gse, gsm):
     ]
 
     metadata_str = []
+    # Share the input allowance between fields, reserving room for labels and
+    # instructions so one long protocol cannot crowd out all other metadata.
+    field_budget = max(1, (config.DEMO_MAX_INPUT_TOKENS - 600) // (
+        config.DEMO_METADATA_SAMPLES * (len(gse_fields) + len(gsm_fields))
+    ))
 
     for field in gse_fields:
         value = gse.metadata.get(field, ['N/A'])[0]
+        if config.DEMO_MODE:
+            value = truncate_text(value, field_budget)
         metadata_str.append(f"GSE {field.replace('_', ' ').title()}: {value}")
 
     for field in gsm_fields:
         value = gsm.metadata.get(field, ['N/A'])[0]
+        if config.DEMO_MODE:
+            value = truncate_text(value, field_budget)
         metadata_str.append(f"GSM {field.replace('_', ' ').title()}: {value}")
 
     return "\n".join(metadata_str)
 
 
 def get_all_metadata_samples(gse):
-    field_values = set()
-    for gsm in gse.gsms.values():
-        field_values.add(format_metadata(gse, gsm))
-    return list(field_values)
+    field_values = []
+    seen = set()
+    # Stable accession order makes the same demo reproducible across runs.
+    for gsm_id in sorted(gse.gsms):
+        value = format_metadata(gse, gse.gsms[gsm_id])
+        if value not in seen:
+            seen.add(value)
+            field_values.append(value)
+        if config.DEMO_MODE and len(field_values) >= config.DEMO_METADATA_SAMPLES:
+            break
+    return field_values
 
 
 def extract_predicates_for_aspect(aspect, field_values):
@@ -82,6 +100,18 @@ def extract_predicates_for_aspect(aspect, field_values):
 
 def extract_all_predicates(gse):
     field_values = get_all_metadata_samples(gse)
+    if config.DEMO_MODE:
+        response = openai_generate([
+            {"role": "system", "content": (
+                "Extract at most 12 factual unary predicates from the sampled GEO metadata. "
+                "Cover study design, sample collection, organism, assay platform, data processing, "
+                "quality control, replicates and controls when explicitly stated. "
+                "Omit missing or N/A values; do not invent facts. "
+                "Return only predicateName(CamelCaseValue), one per line, with no explanations."
+            )},
+            {"role": "user", "content": "\n\n".join(field_values)},
+        ])
+        return {"demo": response.choices[0].message.content}
     all_predicates = {}
 
     for aspect in annotation_aspects_list:

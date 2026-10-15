@@ -99,6 +99,40 @@ Docker deployment uses `Backend/.env` for configuration. An existing
 updating an existing deployment, add the host and port settings to your current
 `Backend/.env`; the copy command above preserves existing files.
 
+### Small demo runs
+
+The environment example enables `DEMO_MODE=true`. For an existing deployment,
+add it to `Backend/.env`; without this setting the full workflow remains enabled.
+Demo mode uses these limits:
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `DEMO_METADATA_SAMPLES` | `2` | Up to two distinct, truncated metadata records in stable GSM accession order |
+| `DEMO_ABSTRACT_CHUNKS` | `2` | Only the first two abstract chunks are processed |
+| `DEMO_MAX_INPUT_TOKENS` | `2000` | Per-call prompt budget, including a conservative chat-framing allowance |
+| `DEMO_MAX_OUTPUT_TOKENS` | `512` | Per-call response cap, also respecting any lower provider limit |
+
+Metadata fields are truncated individually before combining the sampled records.
+A single compact metadata prompt replaces the usual six extraction/refinement
+pairs. Abstract prompts ask for at most five relationships each. The main run
+therefore makes up to three logical LLM calls; GSM conversion adds one call to
+map column names. Provider retries can add requests. The existing 15-row table
+preview and conversion sample are unchanged.
+
+These are partial demonstration results; the interface labels them accordingly.
+The input budget uses the configured OpenAI model's tokenizer, with a local
+`cl100k_base` estimate for Gemini or unknown models. It is not a measured billing
+total or a provider-independent context guarantee. The independent full-paper
+script is unaffected. Set `DEMO_MODE=false` to restore the full GEO workflow.
+
+After changing the settings, recreate the backend from `Backend`:
+
+```bash
+docker compose up -d --build --no-deps fastapi-backend
+```
+
+Rebuild `frontend` as well when deploying the demo label for the first time.
+
 ### Start the services
 
 ```bash

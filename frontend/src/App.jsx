@@ -93,6 +93,7 @@ function App() {
   const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [phase, setPhase] = useState('idle');
   const [progress, setProgress] = useState('');
+  const [demoLimits, setDemoLimits] = useState(null);
   const [abstract, setAbstract] = useState('');
   const [abstractPredicates, setAbstractPredicates] = useState('');
   const [gseMetadataPredicates, setGseMetadataPredicates] = useState('');
@@ -147,6 +148,13 @@ function App() {
           const json = JSON.parse(event.data);
           if (!json || typeof json !== 'object' || Array.isArray(json)) throw new Error('Unexpected progress response.');
           if (json.error) throw new Error(typeof json.error === 'string' ? json.error : 'The server reported a processing error.');
+          if (json.demo) {
+            if (!Number.isSafeInteger(json.demo.metadata_samples) || json.demo.metadata_samples < 1
+              || !Number.isSafeInteger(json.demo.abstract_chunks) || json.demo.abstract_chunks < 1) {
+              throw new Error('Unexpected demo configuration response.');
+            }
+            setDemoLimits(json.demo);
+          }
           if (json.gsms) {
             if (typeof json.gsms.gse_id !== 'string' || !/^GSE\d+$/.test(json.gsms.gse_id)
               || !Array.isArray(json.gsms.gsm_ids) || !json.gsms.gsm_ids.every((id) => typeof id === 'string')) {
@@ -196,6 +204,7 @@ function App() {
     setPhase('running');
     setProcessError(null);
     setProgress('Starting the extraction…');
+    setDemoLimits(null);
     setStudyId(requestedStudy);
     setStudyVersion((version) => version + 1);
     setAbstract('');
@@ -288,6 +297,10 @@ function App() {
         <section className="card">
           <div className="card-header">Extraction {studyId && <span className="study-label">{studyId}</span>}</div>
           <div className="status-bar" role="status">{status}</div>
+          {demoLimits && <div className="empty-state" role="status">
+            Demo mode: up to {demoLimits.metadata_samples} GSM metadata records and {demoLimits.abstract_chunks} abstract chunks.
+            Results use sampled and truncated input.
+          </div>}
           {loading && !processError && <div className="activity-bar" aria-label="Extraction in progress" />}
           <ErrorNotice title="Couldn’t finish the extraction" error={processError}
             onRetry={!loading && connection === 'connected' && isValidGseId(studyId) ? () => {

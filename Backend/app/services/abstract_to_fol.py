@@ -78,6 +78,15 @@ def generate_triples_from_concepts(parsed_medcat_response, prompt):
     ])
 
     filled_prompt = prompt.format(concepts= concepts_str, texts=text)
+    if config.DEMO_MODE:
+        # A small structured response is less likely to be cut off by the demo
+        # output limit than an exhaustive relationship list.
+        filled_prompt = (
+            "Extract at most 5 factual relationships using only the annotated concept names. "
+            "Use lowercase values and short predicates. Return only a JSON array of objects "
+            "with subject, predicate, object keys; no markdown or explanations.\n"
+            f"Text:\n{text}\nAnnotations:\n{concepts_str}"
+        )
     messages = [
         {'role': 'system', 'content': """
             You are an AI expert specialized in knowledge graph extraction. 
@@ -136,7 +145,8 @@ def generate_valid_predicates_from_abstract(chunks):
     """
     all_predicates = []
 
-    for chunk in chunks:
+    selected_chunks = chunks[:config.DEMO_ABSTRACT_CHUNKS] if config.DEMO_MODE else chunks
+    for chunk in selected_chunks:
         # Step 1: Annotate with MedCAT
         medcat_json = annotate_with_medcat(chunk)
 

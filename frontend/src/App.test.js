@@ -320,6 +320,15 @@ test('does not display sample-list JSON as a progress update', () => {
   expect(screen.queryByText(/"gsm_ids"/)).not.toBeInTheDocument();
 });
 
+test('labels sampled demo results and clears the label on a new extraction', () => {
+  prepareStudy();
+  send({ demo: { metadata_samples: 2, abstract_chunks: 2 } });
+  expect(screen.getByText(/Demo mode: up to 2 GSM metadata records and 2 abstract chunks/)).toBeInTheDocument();
+  global.fetch.mockReturnValueOnce(new Promise(() => {}));
+  fireEvent.click(screen.getByRole('button', { name: 'Parse' }));
+  expect(screen.queryByText(/Demo mode:/)).not.toBeInTheDocument();
+});
+
 test('retries a failed sample without changing the selected sample', async () => {
   global.fetch.mockResolvedValueOnce({ ok: false, status: 503 });
   showGsmChoices();
