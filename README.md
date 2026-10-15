@@ -1,59 +1,40 @@
-# Bio Semantic Parsing
+# Bio Semantic Parser
 
-This project focuses on building a pipeline that automates the extraction and transformation of biological research data into a structured logical format using advanced Large Language Model (LLM) prompting techniques. 
+A research prototype for extracting biomedical information from
+[Gene Expression Omnibus (GEO)](https://www.ncbi.nlm.nih.gov/geo/) study metadata
+and PubMed abstracts, using MedCAT and LLMs to produce predicates and MeTTa
+representations. A separate prototype processes full papers from arXiv.
 
-By converting unstructured biomedical data into formal representations (MeTTa / First-Order Logic), the pipeline enables seamless integration into Atomspace — supporting efficient, data-driven reasoning and knowledge representation.
+The current work focuses on knowledge extraction and representation. AtomSpace
+integration and PLN reasoning remain planned research stages.
 
-## ✨ Current Implementation
+## Quick start
 
-- **Data Source**: [GEO (Gene Expression Omnibus)](https://www.ncbi.nlm.nih.gov/geo/)
-- **Functionality**:
-  - Accepts a **GSE ID**
-  - Loads the associated **paper abstract** from PubMed
-  - Converts both the abstract and GSE metadata into **MeTTa format**
-  - Prepares the data for **Atomspace representation**
-
-![diagram-export-7-8-2025-10_55_00-AM](https://github.com/user-attachments/assets/2d845b55-e6a1-4667-b4e6-9a465aaa4e9d)
-
-
-## 🛠️ Installation & Usage
-
-### 1. Clone the Repository
+Requires Docker with the Docker Compose plugin.
 
 ```bash
 git clone https://github.com/iCog-Labs-Dev/bio-semantic-parser.git
 cd bio-semantic-parser
+cp -n Backend/.env.example Backend/.env
 ```
 
-### 2. Set Environment Variables
-
-Create a `.env` file in the root directory of the frontend and backend folders and add the necessary keys.
-
-### 3. Navigate to Backend Directory
+Edit `Backend/.env` to select an LLM provider and supply its API key. For remote
+access, set `PUBLIC_HOST` to your server's IP address or hostname. All published
+ports are configurable in the same file.
 
 ```bash
 cd Backend
+mkdir -p models data
+docker compose up -d --build
 ```
 
-### 4. Build Docker Containers
+With the defaults, the interface is at [localhost:3030](http://localhost:3030)
+and API documentation at [localhost:8010/docs](http://localhost:8010/docs).
+For remote access, use your server's address and configured ports. First startup
+downloads the MedCAT models before the backend becomes available.
 
-```bash
-docker compose build
-```
+## Documentation
 
-### 5. Start the Application
-
-```bash
-docker compose up
-```
-
-### 6. Access the Web Interface
-
-After the build is complete and the server is running, open your browser and visit:
-
-```
-http://localhost:3030/
-```
-
-You should see the Bio Semantic Parsing interface ready to accept GSE IDs.
-
+See the [research guide](docs/research-guide.md) for experimental workflows,
+representations, configuration, API usage, local development, tests, and
+limitations.
