@@ -1,9 +1,9 @@
-# frontend/Dockerfile
-FROM node:18-alpine
+# frontend/dockerfile
+FROM node:24-alpine
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 EXPOSE 3030

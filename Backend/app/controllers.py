@@ -7,6 +7,7 @@ from .services.gsm_to_metta import generate_metta_from_gsm, load_gsm_data
 import logging
 import json
 import GEOparse
+from app.core.config import config
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,6 +28,11 @@ def process_gse_pipeline(gse_id: str, send_progress) -> list:
         list: A list of predicates generated from the GSE and PubMed article.
     """
 
+    if config.DEMO_MODE:
+        send_or_log(json.dumps({"demo": {
+            "metadata_samples": config.DEMO_METADATA_SAMPLES,
+            "abstract_chunks": config.DEMO_ABSTRACT_CHUNKS,
+        }}), send_progress)
     send_or_log("Fetching GSE data...", send_progress)
  
     gse_data = fetch_gse_data(gse_id)
